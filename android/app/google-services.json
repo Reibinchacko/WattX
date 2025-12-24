@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "350835321492",
+    "project_id": "wattx-16024",
+    "storage_bucket": "wattx-16024.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:350835321492:android:2195ce3e367531eecc6281",
+        "android_client_info": {
+          "package_name": "com.example.energy_monitor"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB2BoOFZrtoK2uFaItzRGBTdZ2xT2pxdI4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
