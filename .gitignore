@@ -43,3 +43,8 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Logs
+doctor.txt
+doctor_final.txt
+doctor_ultra_final.txt
