@@ -281,7 +281,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                         prefixIcon: Icon(
                           Icons.email_outlined,
                           color: _emailError != null
-                              ? const Color(0xFFE53935)
+                              ? const Color(0xFFFFB300)
                               : const Color(0xFF9E9E9E),
                           size: 20,
                         ),
@@ -292,12 +292,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     const Icon(Icons.error_outline,
-                                        color: Color(0xFFE53935), size: 16),
+                                        color: Color(0xFFFFB300), size: 16),
                                     const SizedBox(width: 4),
                                     Text(
                                       _emailError!,
                                       style: GoogleFonts.inter(
-                                        color: const Color(0xFFE53935),
+                                        color: const Color(0xFFFFB300),
                                         fontSize: 11,
                                         fontWeight: FontWeight.w600,
                                       ),
@@ -315,21 +315,19 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           borderRadius: BorderRadius.circular(30),
                           borderSide: _emailError != null
                               ? const BorderSide(
-                                  color: Color(0xFFE53935), width: 1)
+                                  color: Color(0xFF212121), width: 1.2)
                               : BorderSide.none,
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(30),
                           borderSide: BorderSide(
                               color: _emailError != null
-                                  ? const Color(0xFFE53935)
+                                  ? const Color(0xFF212121)
                                   : Colors.black12,
                               width: 1.5),
                         ),
                         filled: true,
-                        fillColor: _emailError != null
-                            ? const Color(0xFFFFF1F1)
-                            : Colors.white,
+                        fillColor: Colors.white,
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 20,
                           vertical: 18,
