@@ -27,10 +27,20 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     super.dispose();
   }
 
+  String? _emailError;
+
   void _validateForm() {
     setState(() {
-      _isFormValid = _emailController.text.trim().isNotEmpty;
+      _emailError = _validateEmail(_emailController.text);
+      _isFormValid = _emailError == null;
     });
+  }
+
+  String? _validateEmail(String? value) {
+    if (value == null || value.isEmpty) return 'Required';
+    final emailRegExp = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+    if (!emailRegExp.hasMatch(value)) return 'Invalid Email';
+    return null;
   }
 
   Future<void> forgotPassword(String email) async {
@@ -268,44 +278,77 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                         hintStyle: GoogleFonts.inter(
                           color: const Color(0xFFBDBDBD),
                         ),
-                        prefixIcon: const Icon(
+                        prefixIcon: Icon(
                           Icons.email_outlined,
-                          color: Color(0xFF9E9E9E),
+                          color: _emailError != null
+                              ? const Color(0xFFE53935)
+                              : const Color(0xFF9E9E9E),
                           size: 20,
                         ),
+                        suffixIcon: _emailError != null
+                            ? Padding(
+                                padding: const EdgeInsets.only(right: 16),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.error_outline,
+                                        color: Color(0xFFE53935), size: 16),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      _emailError!,
+                                      style: GoogleFonts.inter(
+                                        color: const Color(0xFFE53935),
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              )
+                            : null,
+                        errorStyle: const TextStyle(fontSize: 0, height: 0),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(30),
                           borderSide: BorderSide.none,
                         ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(30),
+                          borderSide: _emailError != null
+                              ? const BorderSide(
+                                  color: Color(0xFFE53935), width: 1)
+                              : BorderSide.none,
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(30),
+                          borderSide: BorderSide(
+                              color: _emailError != null
+                                  ? const Color(0xFFE53935)
+                                  : Colors.black12,
+                              width: 1.5),
+                        ),
                         filled: true,
-                        fillColor: Colors.white,
+                        fillColor: _emailError != null
+                            ? const Color(0xFFFFF1F1)
+                            : Colors.white,
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 20,
                           vertical: 18,
                         ),
                       ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter your email';
-                        }
-                        final emailRegExp =
-                            RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
-                        if (!emailRegExp.hasMatch(value)) {
-                          return 'Please enter a valid email address';
-                        }
-                        return null;
-                      },
+                      validator: _validateEmail,
                     ),
                   ),
 
                   const SizedBox(height: 40),
 
                   ElevatedButton(
-                    onPressed: () {
-                      if (_formKey.currentState!.validate()) {
-                        forgotPassword(_emailController.text.trim());
-                      }
-                    },
+                    onPressed: _isFormValid
+                        ? () {
+                            if (_formKey.currentState!.validate()) {
+                              forgotPassword(_emailController.text.trim());
+                            }
+                          }
+                        : null,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: _isFormValid
                           ? const Color(0xFFFFEB3B)

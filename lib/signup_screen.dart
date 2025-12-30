@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'services/auth_service.dart';
-import 'dashboard_screen.dart';
+import 'login_screen.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -20,8 +20,61 @@ class _SignupScreenState extends State<SignupScreen> {
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
   bool _isLoading = false;
+  bool _isFormValid = false;
 
   final AuthService _authService = AuthService();
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController.addListener(_validateForm);
+    _emailController.addListener(_validateForm);
+    _passwordController.addListener(_validateForm);
+    _confirmPasswordController.addListener(_validateForm);
+  }
+
+  String? _nameError;
+  String? _emailError;
+  String? _passwordError;
+  String? _confirmPasswordError;
+
+  void _validateForm() {
+    setState(() {
+      _nameError = _validateName(_nameController.text);
+      _emailError = _validateEmail(_emailController.text);
+      _passwordError = _validatePassword(_passwordController.text);
+      _confirmPasswordError =
+          _validateConfirmPassword(_confirmPasswordController.text);
+      _isFormValid = _nameError == null &&
+          _emailError == null &&
+          _passwordError == null &&
+          _confirmPasswordError == null;
+    });
+  }
+
+  String? _validateName(String? value) {
+    if (value == null || value.isEmpty) return 'Required';
+    return null;
+  }
+
+  String? _validateEmail(String? value) {
+    if (value == null || value.isEmpty) return 'Required';
+    final emailRegExp = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+    if (!emailRegExp.hasMatch(value)) return 'Invalid Email';
+    return null;
+  }
+
+  String? _validatePassword(String? value) {
+    if (value == null || value.isEmpty) return 'Required';
+    if (value.length < 6) return 'Min 6 chars';
+    return null;
+  }
+
+  String? _validateConfirmPassword(String? value) {
+    if (value == null || value.isEmpty) return 'Required';
+    if (value != _passwordController.text) return 'Mismatch';
+    return null;
+  }
 
   @override
   void dispose() {
@@ -45,10 +98,19 @@ class _SignupScreenState extends State<SignupScreen> {
           name: _nameController.text.trim(),
         );
 
+        // Sign out after signup as requested to force manual login
+        await _authService.signOut();
+
         if (mounted) {
-          // Navigate to dashboard and remove history
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Account created successfully! Please log in.'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          // Explicitly go to login page and clear stack
           Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (context) => const DashboardScreen()),
+            MaterialPageRoute(builder: (context) => const LoginScreen()),
             (route) => false,
           );
         }
@@ -129,20 +191,59 @@ class _SignupScreenState extends State<SignupScreen> {
                         hintText: 'Enter Full Name',
                         hintStyle:
                             GoogleFonts.inter(color: const Color(0xFFBDBDBD)),
-                        prefixIcon: const Icon(Icons.person_outline,
-                            color: Color(0xFF9E9E9E), size: 20),
+                        prefixIcon: Icon(Icons.person_outline,
+                            color: _nameError != null
+                                ? const Color(0xFFE53935)
+                                : const Color(0xFF9E9E9E),
+                            size: 20),
+                        suffixIcon: _nameError != null
+                            ? Padding(
+                                padding: const EdgeInsets.only(right: 16),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.error_outline,
+                                        color: Color(0xFFE53935), size: 16),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      _nameError!,
+                                      style: GoogleFonts.inter(
+                                        color: const Color(0xFFE53935),
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              )
+                            : null,
+                        errorStyle: const TextStyle(fontSize: 0, height: 0),
                         border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(30),
                             borderSide: BorderSide.none),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(30),
+                          borderSide: _nameError != null
+                              ? const BorderSide(
+                                  color: Color(0xFFE53935), width: 1)
+                              : BorderSide.none,
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(30),
+                          borderSide: BorderSide(
+                              color: _nameError != null
+                                  ? const Color(0xFFE53935)
+                                  : Colors.black12,
+                              width: 1.5),
+                        ),
+                        filled: true,
+                        fillColor: _nameError != null
+                            ? const Color(0xFFFFF1F1)
+                            : Colors.white,
                         contentPadding: const EdgeInsets.symmetric(
                             horizontal: 20, vertical: 16),
                       ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter your name';
-                        }
-                        return null;
-                      },
+                      validator: _validateName,
                     ),
                   ),
 
@@ -178,25 +279,59 @@ class _SignupScreenState extends State<SignupScreen> {
                         hintText: 'Enter Email',
                         hintStyle:
                             GoogleFonts.inter(color: const Color(0xFFBDBDBD)),
-                        prefixIcon: const Icon(Icons.email_outlined,
-                            color: Color(0xFF9E9E9E), size: 20),
+                        prefixIcon: Icon(Icons.email_outlined,
+                            color: _emailError != null
+                                ? const Color(0xFFE53935)
+                                : const Color(0xFF9E9E9E),
+                            size: 20),
+                        suffixIcon: _emailError != null
+                            ? Padding(
+                                padding: const EdgeInsets.only(right: 16),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.error_outline,
+                                        color: Color(0xFFE53935), size: 16),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      _emailError!,
+                                      style: GoogleFonts.inter(
+                                        color: const Color(0xFFE53935),
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              )
+                            : null,
+                        errorStyle: const TextStyle(fontSize: 0, height: 0),
                         border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(30),
                             borderSide: BorderSide.none),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(30),
+                          borderSide: _emailError != null
+                              ? const BorderSide(
+                                  color: Color(0xFFE53935), width: 1)
+                              : BorderSide.none,
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(30),
+                          borderSide: BorderSide(
+                              color: _emailError != null
+                                  ? const Color(0xFFE53935)
+                                  : Colors.black12,
+                              width: 1.5),
+                        ),
+                        filled: true,
+                        fillColor: _emailError != null
+                            ? const Color(0xFFFFF1F1)
+                            : Colors.white,
                         contentPadding: const EdgeInsets.symmetric(
                             horizontal: 20, vertical: 16),
                       ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter your email';
-                        }
-                        final emailRegExp =
-                            RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
-                        if (!emailRegExp.hasMatch(value)) {
-                          return 'Please enter a valid email address';
-                        }
-                        return null;
-                      },
+                      validator: _validateEmail,
                     ),
                   ),
 
@@ -232,37 +367,77 @@ class _SignupScreenState extends State<SignupScreen> {
                         hintText: 'Enter Password',
                         hintStyle:
                             GoogleFonts.inter(color: const Color(0xFFBDBDBD)),
-                        prefixIcon: const Icon(Icons.lock_outline,
-                            color: Color(0xFF9E9E9E), size: 20),
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _isPasswordVisible
-                                ? Icons.visibility_off_outlined
-                                : Icons.visibility_outlined,
-                            color: const Color(0xFF9E9E9E),
-                            size: 20,
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              _isPasswordVisible = !_isPasswordVisible;
-                            });
-                          },
+                        prefixIcon: Icon(Icons.lock_outline,
+                            color: _passwordError != null
+                                ? const Color(0xFFE53935)
+                                : const Color(0xFF9E9E9E),
+                            size: 20),
+                        suffixIcon: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (_passwordError != null)
+                              Padding(
+                                padding: const EdgeInsets.only(right: 8),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.error_outline,
+                                        color: Color(0xFFE53935), size: 16),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      _passwordError!,
+                                      style: GoogleFonts.inter(
+                                        color: const Color(0xFFE53935),
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            IconButton(
+                              icon: Icon(
+                                _isPasswordVisible
+                                    ? Icons.visibility_off_outlined
+                                    : Icons.visibility_outlined,
+                                color: const Color(0xFF9E9E9E),
+                                size: 20,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _isPasswordVisible = !_isPasswordVisible;
+                                });
+                              },
+                            ),
+                          ],
                         ),
+                        errorStyle: const TextStyle(fontSize: 0, height: 0),
                         border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(30),
                             borderSide: BorderSide.none),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(30),
+                          borderSide: _passwordError != null
+                              ? const BorderSide(
+                                  color: Color(0xFFE53935), width: 1)
+                              : BorderSide.none,
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(30),
+                          borderSide: BorderSide(
+                              color: _passwordError != null
+                                  ? const Color(0xFFE53935)
+                                  : Colors.black12,
+                              width: 1.5),
+                        ),
+                        filled: true,
+                        fillColor: _passwordError != null
+                            ? const Color(0xFFFFF1F1)
+                            : Colors.white,
                         contentPadding: const EdgeInsets.symmetric(
                             horizontal: 20, vertical: 16),
                       ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter a password';
-                        }
-                        if (value.length < 6) {
-                          return 'Password must be at least 6 characters';
-                        }
-                        return null;
-                      },
+                      validator: _validatePassword,
                     ),
                   ),
 
@@ -298,51 +473,95 @@ class _SignupScreenState extends State<SignupScreen> {
                         hintText: 'Re-enter Password',
                         hintStyle:
                             GoogleFonts.inter(color: const Color(0xFFBDBDBD)),
-                        prefixIcon: const Icon(Icons.lock_outline,
-                            color: Color(0xFF9E9E9E), size: 20),
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _isConfirmPasswordVisible
-                                ? Icons.visibility_off_outlined
-                                : Icons.visibility_outlined,
-                            color: const Color(0xFF9E9E9E),
-                            size: 20,
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              _isConfirmPasswordVisible =
-                                  !_isConfirmPasswordVisible;
-                            });
-                          },
+                        prefixIcon: Icon(Icons.lock_outline,
+                            color: _confirmPasswordError != null
+                                ? const Color(0xFFE53935)
+                                : const Color(0xFF9E9E9E),
+                            size: 20),
+                        suffixIcon: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (_confirmPasswordError != null)
+                              Padding(
+                                padding: const EdgeInsets.only(right: 8),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.error_outline,
+                                        color: Color(0xFFE53935), size: 16),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      _confirmPasswordError!,
+                                      style: GoogleFonts.inter(
+                                        color: const Color(0xFFE53935),
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            IconButton(
+                              icon: Icon(
+                                _isConfirmPasswordVisible
+                                    ? Icons.visibility_off_outlined
+                                    : Icons.visibility_outlined,
+                                color: const Color(0xFF9E9E9E),
+                                size: 20,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _isConfirmPasswordVisible =
+                                      !_isConfirmPasswordVisible;
+                                });
+                              },
+                            ),
+                          ],
                         ),
+                        errorStyle: const TextStyle(fontSize: 0, height: 0),
                         border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(30),
                             borderSide: BorderSide.none),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(30),
+                          borderSide: _confirmPasswordError != null
+                              ? const BorderSide(
+                                  color: Color(0xFFE53935), width: 1)
+                              : BorderSide.none,
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(30),
+                          borderSide: BorderSide(
+                              color: _confirmPasswordError != null
+                                  ? const Color(0xFFE53935)
+                                  : Colors.black12,
+                              width: 1.5),
+                        ),
+                        filled: true,
+                        fillColor: _confirmPasswordError != null
+                            ? const Color(0xFFFFF1F1)
+                            : Colors.white,
                         contentPadding: const EdgeInsets.symmetric(
                             horizontal: 20, vertical: 16),
                       ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please confirm your password';
-                        }
-                        if (value != _passwordController.text) {
-                          return 'Passwords do not match';
-                        }
-                        return null;
-                      },
+                      validator: _validateConfirmPassword,
                     ),
                   ),
 
                   const SizedBox(height: 40),
 
-                  // Sign Up Button
                   SizedBox(
                     height: 56,
                     child: ElevatedButton(
-                      onPressed: _isLoading ? null : _handleSignup,
+                      onPressed:
+                          _isLoading || !_isFormValid ? null : _handleSignup,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFFFEB3B),
-                        foregroundColor: Colors.black,
+                        backgroundColor: _isFormValid
+                            ? const Color(0xFFFFEB3B)
+                            : const Color(0xFFE0E0E0),
+                        foregroundColor: _isFormValid
+                            ? Colors.black
+                            : const Color(0xFF9E9E9E),
                         elevation: 0,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(30),

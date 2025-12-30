@@ -39,11 +39,28 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  String? _emailError;
+  String? _passwordError;
+
   void _validateForm() {
     setState(() {
-      _isFormValid = _emailController.text.trim().isNotEmpty &&
-          _passwordController.text.trim().isNotEmpty;
+      _emailError = _validateEmail(_emailController.text);
+      _passwordError = _validatePassword(_passwordController.text);
+      _isFormValid = _emailError == null && _passwordError == null;
     });
+  }
+
+  String? _validateEmail(String? value) {
+    if (value == null || value.isEmpty) return 'Required';
+    final emailRegExp = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+    if (!emailRegExp.hasMatch(value)) return 'Invalid Email';
+    return null;
+  }
+
+  String? _validatePassword(String? value) {
+    if (value == null || value.isEmpty) return 'Required';
+    if (value.length < 6) return 'Min 6 chars';
+    return null;
   }
 
   void _handleLogin() async {
@@ -194,6 +211,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     child: TextFormField(
                       controller: _emailController,
+                      autovalidateMode: AutovalidateMode.onUserInteraction,
                       style: GoogleFonts.inter(
                         fontSize: 15,
                         color: Colors.black, // Darker text for readability
@@ -203,33 +221,64 @@ class _LoginScreenState extends State<LoginScreen> {
                         hintStyle: GoogleFonts.inter(
                           color: const Color(0xFFBDBDBD),
                         ),
-                        prefixIcon: const Icon(
+                        prefixIcon: Icon(
                           Icons.email_outlined,
-                          color: Color(0xFF9E9E9E),
+                          color: _emailError != null
+                              ? const Color(0xFFE53935)
+                              : const Color(0xFF9E9E9E),
                           size: 20,
                         ),
+                        suffixIcon: _emailError != null
+                            ? Padding(
+                                padding: const EdgeInsets.only(right: 16),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.error_outline,
+                                        color: Color(0xFFE53935), size: 16),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      _emailError!,
+                                      style: GoogleFonts.inter(
+                                        color: const Color(0xFFE53935),
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              )
+                            : null,
+                        errorStyle: const TextStyle(fontSize: 0, height: 0),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(30),
                           borderSide: BorderSide.none,
                         ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(30),
+                          borderSide: _emailError != null
+                              ? const BorderSide(
+                                  color: Color(0xFFE53935), width: 1)
+                              : BorderSide.none,
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(30),
+                          borderSide: BorderSide(
+                              color: _emailError != null
+                                  ? const Color(0xFFE53935)
+                                  : Colors.black12,
+                              width: 1.5),
+                        ),
                         filled: true,
-                        fillColor: Colors.white,
+                        fillColor: _emailError != null
+                            ? const Color(0xFFFFF1F1)
+                            : Colors.white,
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 20,
                           vertical: 18,
                         ),
                       ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter your email';
-                        }
-                        final emailRegExp =
-                            RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
-                        if (!emailRegExp.hasMatch(value)) {
-                          return 'Please enter a valid email address';
-                        }
-                        return null;
-                      },
+                      validator: _validateEmail,
                     ),
                   ),
 
@@ -262,6 +311,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     child: TextFormField(
                       controller: _passwordController,
+                      autovalidateMode: AutovalidateMode.onUserInteraction,
                       obscureText: !_isPasswordVisible,
                       style: GoogleFonts.inter(
                         fontSize: 15,
@@ -272,45 +322,82 @@ class _LoginScreenState extends State<LoginScreen> {
                         hintStyle: GoogleFonts.inter(
                           color: const Color(0xFFBDBDBD),
                         ),
-                        prefixIcon: const Icon(
+                        prefixIcon: Icon(
                           Icons.lock_outline,
-                          color: Color(0xFF9E9E9E),
+                          color: _passwordError != null
+                              ? const Color(0xFFE53935)
+                              : const Color(0xFF9E9E9E),
                           size: 20,
                         ),
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _isPasswordVisible
-                                ? Icons.visibility_off_outlined
-                                : Icons.visibility_outlined,
-                            color: const Color(0xFF9E9E9E),
-                            size: 20,
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              _isPasswordVisible = !_isPasswordVisible;
-                            });
-                          },
+                        suffixIcon: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (_passwordError != null)
+                              Padding(
+                                padding: const EdgeInsets.only(right: 8),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.error_outline,
+                                        color: Color(0xFFE53935), size: 16),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      _passwordError!,
+                                      style: GoogleFonts.inter(
+                                        color: const Color(0xFFE53935),
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            IconButton(
+                              icon: Icon(
+                                _isPasswordVisible
+                                    ? Icons.visibility_off_outlined
+                                    : Icons.visibility_outlined,
+                                color: const Color(0xFF9E9E9E),
+                                size: 20,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _isPasswordVisible = !_isPasswordVisible;
+                                });
+                              },
+                            ),
+                          ],
                         ),
+                        errorStyle: const TextStyle(fontSize: 0, height: 0),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(30),
                           borderSide: BorderSide.none,
                         ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(30),
+                          borderSide: _passwordError != null
+                              ? const BorderSide(
+                                  color: Color(0xFFE53935), width: 1)
+                              : BorderSide.none,
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(30),
+                          borderSide: BorderSide(
+                              color: _passwordError != null
+                                  ? const Color(0xFFE53935)
+                                  : Colors.black12,
+                              width: 1.5),
+                        ),
                         filled: true,
-                        fillColor: Colors.white,
+                        fillColor: _passwordError != null
+                            ? const Color(0xFFFFF1F1)
+                            : Colors.white,
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 20,
                           vertical: 18,
                         ),
                       ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter your password';
-                        }
-                        if (value.length < 6) {
-                          return 'Password must be at least 6 characters';
-                        }
-                        return null;
-                      },
+                      validator: _validatePassword,
                     ),
                   ),
 

@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'analytics_screen.dart';
 import 'notifications_screen.dart';
+import 'bill_savings_screen.dart';
+import 'profile_screen.dart';
+import 'control_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -11,62 +14,90 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  // Methods and variables are defined later
+  int _selectedIndex = 0;
+  late PageController _pageController;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController(initialPage: _selectedIndex);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F3ED),
       body: SafeArea(
-        child: IndexedStack(
-          index: _selectedIndex,
+        child: PageView(
+          controller: _pageController,
+          physics: const NeverScrollableScrollPhysics(), // Disable swiping
           children: [
             _buildDashboardView(),
             const AnalyticsScreen(),
-            _buildPlaceholderView('Devices'),
-            const NotificationsScreen(),
+            const BillSavingsScreen(),
+            const ControlScreen(),
+            const ProfileScreen(),
           ],
         ),
       ),
       bottomNavigationBar: Container(
-        margin: const EdgeInsets.all(20),
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+        margin: const EdgeInsets.fromLTRB(20, 0, 20, 20),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(32),
+          borderRadius: BorderRadius.circular(30),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withAlpha((0.05 * 255).toInt()),
-              blurRadius: 20,
-              offset: const Offset(0, 4),
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 15,
+              offset: const Offset(0, 5),
             ),
           ],
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            _buildNavItem(Icons.home, 0),
-            _buildNavItem(Icons.bar_chart, 1),
-            _buildNavItem(Icons.account_balance_wallet_outlined, 2),
-            _buildNavItem(Icons.notifications_none, 3),
-          ],
+        child: SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildNavItem(Icons.grid_view_rounded, 0, 'Dashboard'),
+                _buildNavItem(Icons.show_chart_rounded, 1, 'Graphs'),
+                _buildNavItem(Icons.receipt_long_outlined, 2, 'Billing'),
+                _buildNavItem(Icons.toggle_on_outlined, 3, 'Control'),
+                _buildNavItem(Icons.person_outline_rounded, 4, 'Profile'),
+              ],
+            ),
+          ),
         ),
       ),
     );
   }
 
-  // Assuming this is part of a StatefulWidget's State class
-  int _selectedIndex = 0; // Added for the new _buildNavItem logic
+  // State variables management
 
   void _onItemTapped(int index) {
+    if (_selectedIndex == index) return;
+
     setState(() {
       _selectedIndex = index;
     });
+
+    _pageController.animateToPage(
+      index,
+      duration: const Duration(milliseconds: 400),
+      curve: Curves.easeInOutCubic,
+    );
   }
 
   Widget _buildDashboardView() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -96,14 +127,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     Text(
                       'Welcome back,',
                       style: GoogleFonts.inter(
-                        fontSize: 13,
+                        fontSize: 12,
                         color: const Color(0xFF757575),
                       ),
                     ),
                     Text(
                       'Alex Morgan',
                       style: GoogleFonts.inter(
-                        fontSize: 18,
+                        fontSize: 15,
                         fontWeight: FontWeight.w700,
                         color: Colors.black,
                       ),
@@ -114,8 +145,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
               // Notification Bell
               InkWell(
                 onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Notifications clicked')),
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const NotificationsScreen(),
+                    ),
                   );
                 },
                 borderRadius: BorderRadius.circular(20),
@@ -145,7 +179,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               Text(
                 'Current Load',
                 style: GoogleFonts.inter(
-                  fontSize: 24,
+                  fontSize: 18,
                   fontWeight: FontWeight.w700,
                   color: Colors.black,
                 ),
@@ -213,7 +247,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       Text(
                         'Real-time Power',
                         style: GoogleFonts.inter(
-                          fontSize: 16,
+                          fontSize: 14,
                           fontWeight: FontWeight.w600,
                           color: const Color(0xFF5D4E00),
                         ),
@@ -225,7 +259,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           Text(
                             '3.4',
                             style: GoogleFonts.inter(
-                              fontSize: 64,
+                              fontSize: 36,
                               fontWeight: FontWeight.w800,
                               color: Colors.black,
                               height: 1.0,
@@ -236,7 +270,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             child: Text(
                               'kW',
                               style: GoogleFonts.inter(
-                                fontSize: 20,
+                                fontSize: 16,
                                 fontWeight: FontWeight.w600,
                                 color: const Color(0xFF757575),
                               ),
@@ -277,8 +311,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     right: 0,
                     top: 0,
                     child: Container(
-                      width: 80,
-                      height: 80,
+                      width: 64,
+                      height: 64,
                       decoration: const BoxDecoration(
                         color: Color(0xFFFDD835),
                         shape: BoxShape.circle,
@@ -336,9 +370,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        '\$45.20',
+                        '₹45.20',
                         style: GoogleFonts.inter(
-                          fontSize: 24,
+                          fontSize: 18,
                           fontWeight: FontWeight.w700,
                           color: Colors.black,
                         ),
@@ -347,11 +381,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                 ),
                 InkWell(
-                  onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Bill Details clicked')),
-                    );
-                  },
+                  onTap: () => _onItemTapped(2),
                   borderRadius: BorderRadius.circular(20),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
@@ -382,7 +412,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           Text(
             'Metrics',
             style: GoogleFonts.inter(
-              fontSize: 24,
+              fontSize: 18,
               fontWeight: FontWeight.w700,
               color: Colors.black,
             ),
@@ -440,15 +470,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildPlaceholderView(String title) {
-    return Center(
-      child: Text(
-        '$title Screen',
-        style: GoogleFonts.inter(fontSize: 24, fontWeight: FontWeight.bold),
-      ),
-    );
-  }
-
   Widget _buildMetricCard({
     required IconData icon,
     required Color iconColor,
@@ -465,10 +486,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
       },
       borderRadius: BorderRadius.circular(24),
       child: Container(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(20),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -486,7 +507,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   child: Icon(
                     icon,
                     color: iconColor,
-                    size: 24,
+                    size: 20,
                   ),
                 ),
                 Container(
@@ -503,7 +524,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             Text(
               label,
               style: GoogleFonts.inter(
-                fontSize: 13,
+                fontSize: 11,
                 color: const Color(0xFF9E9E9E),
               ),
             ),
@@ -514,7 +535,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 Text(
                   value,
                   style: GoogleFonts.inter(
-                    fontSize: 28,
+                    fontSize: 18,
                     fontWeight: FontWeight.w700,
                     color: Colors.black,
                   ),
@@ -537,22 +558,32 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildNavItem(IconData icon, int index) {
+  Widget _buildNavItem(IconData icon, int index, String label) {
     bool isActive = _selectedIndex == index;
+    Color activeColor = const Color(0xFFD4E157); // Yellowish lime from image
+    Color inactiveColor = const Color(0xFF9E9E9E);
+
     return GestureDetector(
       onTap: () => _onItemTapped(index),
-      child: Container(
-        width: 56,
-        height: 56,
-        decoration: BoxDecoration(
-          color: isActive ? const Color(0xFFFFEB3B) : Colors.transparent,
-          shape: BoxShape.circle,
-        ),
-        child: Icon(
-          icon,
-          color: isActive ? Colors.black : const Color(0xFF9E9E9E),
-          size: 24,
-        ),
+      behavior: HitTestBehavior.opaque,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            color: isActive ? activeColor : inactiveColor,
+            size: 26,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: GoogleFonts.inter(
+              fontSize: 11,
+              fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
+              color: isActive ? activeColor : inactiveColor,
+            ),
+          ),
+        ],
       ),
     );
   }

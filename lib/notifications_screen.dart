@@ -14,13 +14,13 @@ class NotificationsScreen extends StatelessWidget {
             _buildAppBar(context),
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 12),
                     _buildTitle(),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 16),
                     _buildNotificationList(),
                     const SizedBox(height: 100), // Space for bottom nav
                   ],
@@ -35,7 +35,7 @@ class NotificationsScreen extends StatelessWidget {
 
   Widget _buildAppBar(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -45,21 +45,23 @@ class NotificationsScreen extends StatelessWidget {
               shape: BoxShape.circle,
             ),
             child: IconButton(
-              icon: const Icon(Icons.arrow_back),
-              onPressed: () {},
+              icon: const Icon(Icons.arrow_back, size: 20),
+              onPressed: () {
+                Navigator.pop(context);
+              },
               color: Colors.black,
             ),
           ),
           Text(
             'Notifications',
             style: GoogleFonts.inter(
-              fontSize: 18,
+              fontSize: 16,
               fontWeight: FontWeight.w700,
               color: Colors.black,
             ),
           ),
           IconButton(
-            icon: const Icon(Icons.more_vert),
+            icon: const Icon(Icons.more_vert, size: 20),
             onPressed: () {},
             color: Colors.black,
           ),
@@ -79,16 +81,16 @@ class NotificationsScreen extends StatelessWidget {
             Text(
               'System Alerts',
               style: GoogleFonts.inter(
-                fontSize: 28,
+                fontSize: 20,
                 fontWeight: FontWeight.w800,
                 color: Colors.black,
               ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 2),
             Text(
               '4 new updates',
               style: GoogleFonts.inter(
-                fontSize: 14,
+                fontSize: 12,
                 color: const Color(0xFF757575),
               ),
             ),
@@ -246,7 +248,7 @@ class _NotificationCard extends StatelessWidget {
               ),
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.all(20),
+                  padding: const EdgeInsets.all(14),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -311,7 +313,7 @@ class _NotificationCard extends StatelessWidget {
                       Text(
                         description,
                         style: GoogleFonts.inter(
-                          fontSize: 14,
+                          fontSize: 12,
                           color: const Color(0xFF616161),
                           height: 1.5,
                         ),

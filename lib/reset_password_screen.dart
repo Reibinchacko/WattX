@@ -30,12 +30,28 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     super.dispose();
   }
 
+  String? _newPasswordError;
+  String? _confirmPasswordError;
+
   void _validateForm() {
     setState(() {
-      _isFormValid = _newPasswordController.text.isNotEmpty &&
-          _confirmPasswordController.text.isNotEmpty &&
-          _newPasswordController.text == _confirmPasswordController.text;
+      _newPasswordError = _validatePassword(_newPasswordController.text);
+      _confirmPasswordError =
+          _validateConfirmPassword(_confirmPasswordController.text);
+      _isFormValid = _newPasswordError == null && _confirmPasswordError == null;
     });
+  }
+
+  String? _validatePassword(String? value) {
+    if (value == null || value.isEmpty) return 'Required';
+    if (value.length < 8) return 'Min 8 chars';
+    return null;
+  }
+
+  String? _validateConfirmPassword(String? value) {
+    if (value == null || value.isEmpty) return 'Required';
+    if (value != _newPasswordController.text) return 'Mismatch';
+    return null;
   }
 
   void _resetPassword() {
@@ -120,6 +136,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     required String label,
     required bool isVisible,
     required VoidCallback onToggleVisibility,
+    String? errorText,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -145,44 +162,98 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
               ),
             ],
           ),
-          child: TextField(
+          child: TextFormField(
             controller: controller,
             obscureText: !isVisible,
             style: GoogleFonts.inter(
               fontSize: 15,
-              color: const Color(0xFF9E9E9E),
+              color: Colors.black,
             ),
             decoration: InputDecoration(
               hintText: 'Enter Password',
               hintStyle: GoogleFonts.inter(
                 color: const Color(0xFFBDBDBD),
               ),
-              prefixIcon: const Icon(
+              prefixIcon: Icon(
                 Icons.lock_outline,
-                color: Color(0xFF9E9E9E),
+                color: errorText != null
+                    ? const Color(0xFFE53935)
+                    : const Color(0xFF9E9E9E),
                 size: 20,
               ),
-              suffixIcon: IconButton(
-                icon: Icon(
-                  isVisible
-                      ? Icons.visibility_off_outlined
-                      : Icons.visibility_outlined,
-                  color: const Color(0xFF9E9E9E),
-                  size: 20,
-                ),
-                onPressed: onToggleVisibility,
+              suffixIcon: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (errorText != null)
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.error_outline,
+                              color: Color(0xFFE53935), size: 16),
+                          const SizedBox(width: 4),
+                          Text(
+                            errorText,
+                            style: GoogleFonts.inter(
+                              color: const Color(0xFFE53935),
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  IconButton(
+                    icon: Icon(
+                      isVisible
+                          ? Icons.visibility_off_outlined
+                          : Icons.visibility_outlined,
+                      color: const Color(0xFF9E9E9E),
+                      size: 20,
+                    ),
+                    onPressed: onToggleVisibility,
+                  ),
+                ],
               ),
+              errorStyle: const TextStyle(fontSize: 0, height: 0),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(30),
                 borderSide: BorderSide.none,
               ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(30),
+                borderSide: errorText != null
+                    ? const BorderSide(color: Color(0xFFE53935), width: 1)
+                    : BorderSide.none,
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(30),
+                borderSide: BorderSide(
+                    color: errorText != null
+                        ? const Color(0xFFE53935)
+                        : Colors.black12,
+                    width: 1.5),
+              ),
               filled: true,
-              fillColor: Colors.white,
+              fillColor:
+                  errorText != null ? const Color(0xFFFFF1F1) : Colors.white,
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 20,
                 vertical: 18,
               ),
             ),
+            validator: (value) {
+              if (value == null || value.isEmpty) return 'Required';
+              if (label == 'New Password' && value.length < 8) {
+                return 'Min 8 chars';
+              }
+              if (label == 'Confirm Password' &&
+                  value != _newPasswordController.text) {
+                return 'Mismatch';
+              }
+              return null;
+            },
           ),
         ),
       ],
@@ -274,6 +345,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                   controller: _newPasswordController,
                   label: 'New Password',
                   isVisible: _isNewPasswordVisible,
+                  errorText: _newPasswordError,
                   onToggleVisibility: () {
                     setState(() {
                       _isNewPasswordVisible = !_isNewPasswordVisible;
@@ -287,6 +359,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                   controller: _confirmPasswordController,
                   label: 'Confirm Password',
                   isVisible: _isConfirmPasswordVisible,
+                  errorText: _confirmPasswordError,
                   onToggleVisibility: () {
                     setState(() {
                       _isConfirmPasswordVisible = !_isConfirmPasswordVisible;

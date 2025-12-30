@@ -1,9 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'firestore_service.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirestoreService _firestoreService = FirestoreService();
 
   // Get current user
   User? get currentUser => _auth.currentUser;
@@ -22,19 +22,18 @@ class AuthService {
         password: password,
       );
 
-      // Save user details to Firestore
-      await _firestore.collection('users').doc(userCredential.user!.uid).set({
-        'uid': userCredential.user!.uid,
-        'email': email,
-        'name': name,
-        'createdAt': FieldValue.serverTimestamp(),
-      });
+      // Seed initial data to Firestore (Users, Meters, Bills, etc.)
+      await _firestoreService.seedInitialData(
+        userCredential.user!.uid,
+        email,
+        name,
+      );
 
       return userCredential;
     } on FirebaseAuthException catch (e) {
       throw Exception(e.message);
     } catch (e) {
-      throw Exception('An error occurred occurred during sign up.');
+      throw Exception('An error occurred during sign up.');
     }
   }
 
