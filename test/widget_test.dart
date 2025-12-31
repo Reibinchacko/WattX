@@ -13,7 +13,7 @@ import 'package:energy_monitor/main.dart';
 void main() {
   testWidgets('Login screen displays correctly', (WidgetTester tester) async {
     // Build our app and trigger a frame.
-    await tester.pumpWidget(const EnergyMonitorApp());
+    await tester.pumpWidget(const MyApp());
 
     // Verify login screen elements are present
     expect(find.text('ENERGY MONITOR'), findsOneWidget);
@@ -27,7 +27,7 @@ void main() {
   });
 
   testWidgets('Login button starts disabled', (WidgetTester tester) async {
-    await tester.pumpWidget(const EnergyMonitorApp());
+    await tester.pumpWidget(const MyApp());
 
     // Find the Log In button
     final loginButton = find.widgetWithText(ElevatedButton, 'Log In');
@@ -40,7 +40,7 @@ void main() {
 
   testWidgets('Login button enables when both fields are filled',
       (WidgetTester tester) async {
-    await tester.pumpWidget(const EnergyMonitorApp());
+    await tester.pumpWidget(const MyApp());
 
     // Find input fields
     final emailField = find.widgetWithText(TextField, 'hello@example.com');
@@ -74,7 +74,7 @@ void main() {
   });
 
   testWidgets('Password visibility toggle works', (WidgetTester tester) async {
-    await tester.pumpWidget(const EnergyMonitorApp());
+    await tester.pumpWidget(const MyApp());
 
     // Find password field
     final passwordField = find.widgetWithText(TextField, 'Enter your password');

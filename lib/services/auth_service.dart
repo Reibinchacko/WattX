@@ -1,9 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'firestore_service.dart';
+import 'database_service.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirestoreService _firestoreService = FirestoreService();
+  final DatabaseService _databaseService = DatabaseService();
 
   // Get current user
   User? get currentUser => _auth.currentUser;
@@ -22,8 +22,8 @@ class AuthService {
         password: password,
       );
 
-      // Seed initial data to Firestore (Users, Meters, Bills, etc.)
-      await _firestoreService.seedInitialData(
+      // Seed initial data to Realtime Database (Users, Devices, Readings, etc.)
+      await _databaseService.seedInitialData(
         userCredential.user!.uid,
         email,
         name,

@@ -5,6 +5,8 @@ import 'notifications_screen.dart';
 import 'bill_savings_screen.dart';
 import 'profile_screen.dart';
 import 'control_screen.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
