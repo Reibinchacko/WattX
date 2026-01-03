@@ -1,0 +1,123 @@
+﻿> Task :gradle:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :gradle:compileKotlin UP-TO-DATE
+> Task :gradle:compileJava NO-SOURCE
+> Task :gradle:compileGroovy NO-SOURCE
+> Task :gradle:pluginDescriptors UP-TO-DATE
+> Task :gradle:processResources UP-TO-DATE
+> Task :gradle:classes UP-TO-DATE
+> Task :gradle:jar UP-TO-DATE
+
+> Task :app:signingReport
+Variant: debug
+Config: debug
+Store: C:\Users\ACER\.android\debug.keystore
+Alias: AndroidDebugKey
+MD5: 00:8D:8E:DD:1C:CD:A5:C9:D3:59:1F:1C:F3:E5:BE:47
+SHA1: C0:22:93:C0:19:C3:6D:9B:B0:E5:58:98:A1:53:35:80:9C:C8:56:49
+SHA-256: EF:9B:44:C3:1B:33:1D:8A:82:FD:0B:FA:C1:A0:1B:B9:DF:4D:8B:60:09:BA:FC:FC:08:5F:66:8E:C0:18:6E:A6
+Valid until: Monday, 29 November, 2055
+----------
+Variant: release
+Config: debug
+Store: C:\Users\ACER\.android\debug.keystore
+Alias: AndroidDebugKey
+MD5: 00:8D:8E:DD:1C:CD:A5:C9:D3:59:1F:1C:F3:E5:BE:47
+SHA1: C0:22:93:C0:19:C3:6D:9B:B0:E5:58:98:A1:53:35:80:9C:C8:56:49
+SHA-256: EF:9B:44:C3:1B:33:1D:8A:82:FD:0B:FA:C1:A0:1B:B9:DF:4D:8B:60:09:BA:FC:FC:08:5F:66:8E:C0:18:6E:A6
+Valid until: Monday, 29 November, 2055
+----------
+Variant: profile
+Config: debug
+Store: C:\Users\ACER\.android\debug.keystore
+Alias: AndroidDebugKey
+MD5: 00:8D:8E:DD:1C:CD:A5:C9:D3:59:1F:1C:F3:E5:BE:47
+SHA1: C0:22:93:C0:19:C3:6D:9B:B0:E5:58:98:A1:53:35:80:9C:C8:56:49
+SHA-256: EF:9B:44:C3:1B:33:1D:8A:82:FD:0B:FA:C1:A0:1B:B9:DF:4D:8B:60:09:BA:FC:FC:08:5F:66:8E:C0:18:6E:A6
+Valid until: Monday, 29 November, 2055
+----------
+Variant: debugAndroidTest
+Config: debug
+Store: C:\Users\ACER\.android\debug.keystore
+Alias: AndroidDebugKey
+MD5: 00:8D:8E:DD:1C:CD:A5:C9:D3:59:1F:1C:F3:E5:BE:47
+SHA1: C0:22:93:C0:19:C3:6D:9B:B0:E5:58:98:A1:53:35:80:9C:C8:56:49
+SHA-256: EF:9B:44:C3:1B:33:1D:8A:82:FD:0B:FA:C1:A0:1B:B9:DF:4D:8B:60:09:BA:FC:FC:08:5F:66:8E:C0:18:6E:A6
+Valid until: Monday, 29 November, 2055
+----------
+
+> Task :cloud_firestore:signingReport
+Variant: debugAndroidTest
+Config: debug
+Store: C:\Users\ACER\.android\debug.keystore
+Alias: AndroidDebugKey
+MD5: 00:8D:8E:DD:1C:CD:A5:C9:D3:59:1F:1C:F3:E5:BE:47
+SHA1: C0:22:93:C0:19:C3:6D:9B:B0:E5:58:98:A1:53:35:80:9C:C8:56:49
+SHA-256: EF:9B:44:C3:1B:33:1D:8A:82:FD:0B:FA:C1:A0:1B:B9:DF:4D:8B:60:09:BA:FC:FC:08:5F:66:8E:C0:18:6E:A6
+Valid until: Monday, 29 November, 2055
+----------
+
+> Task :firebase_auth:signingReport
+Variant: debugAndroidTest
+Config: debug
+Store: C:\Users\ACER\.android\debug.keystore
+Alias: AndroidDebugKey
+MD5: 00:8D:8E:DD:1C:CD:A5:C9:D3:59:1F:1C:F3:E5:BE:47
+SHA1: C0:22:93:C0:19:C3:6D:9B:B0:E5:58:98:A1:53:35:80:9C:C8:56:49
+SHA-256: EF:9B:44:C3:1B:33:1D:8A:82:FD:0B:FA:C1:A0:1B:B9:DF:4D:8B:60:09:BA:FC:FC:08:5F:66:8E:C0:18:6E:A6
+Valid until: Monday, 29 November, 2055
+----------
+
+> Task :firebase_core:signingReport
+Variant: debugAndroidTest
+Config: debug
+Store: C:\Users\ACER\.android\debug.keystore
+Alias: AndroidDebugKey
+MD5: 00:8D:8E:DD:1C:CD:A5:C9:D3:59:1F:1C:F3:E5:BE:47
+SHA1: C0:22:93:C0:19:C3:6D:9B:B0:E5:58:98:A1:53:35:80:9C:C8:56:49
+SHA-256: EF:9B:44:C3:1B:33:1D:8A:82:FD:0B:FA:C1:A0:1B:B9:DF:4D:8B:60:09:BA:FC:FC:08:5F:66:8E:C0:18:6E:A6
+Valid until: Monday, 29 November, 2055
+----------
+
+> Task :firebase_database:signingReport
+Variant: debugAndroidTest
+Config: debug
+Store: C:\Users\ACER\.android\debug.keystore
+Alias: AndroidDebugKey
+MD5: 00:8D:8E:DD:1C:CD:A5:C9:D3:59:1F:1C:F3:E5:BE:47
+SHA1: C0:22:93:C0:19:C3:6D:9B:B0:E5:58:98:A1:53:35:80:9C:C8:56:49
+SHA-256: EF:9B:44:C3:1B:33:1D:8A:82:FD:0B:FA:C1:A0:1B:B9:DF:4D:8B:60:09:BA:FC:FC:08:5F:66:8E:C0:18:6E:A6
+Valid until: Monday, 29 November, 2055
+----------
+
+> Task :google_sign_in_android:signingReport
+Variant: debugAndroidTest
+Config: debug
+Store: C:\Users\ACER\.android\debug.keystore
+Alias: AndroidDebugKey
+MD5: 00:8D:8E:DD:1C:CD:A5:C9:D3:59:1F:1C:F3:E5:BE:47
+SHA1: C0:22:93:C0:19:C3:6D:9B:B0:E5:58:98:A1:53:35:80:9C:C8:56:49
+SHA-256: EF:9B:44:C3:1B:33:1D:8A:82:FD:0B:FA:C1:A0:1B:B9:DF:4D:8B:60:09:BA:FC:FC:08:5F:66:8E:C0:18:6E:A6
+Valid until: Monday, 29 November, 2055
+----------
+
+> Task :path_provider_android:signingReport
+Variant: debugAndroidTest
+Config: debug
+Store: C:\Users\ACER\.android\debug.keystore
+Alias: AndroidDebugKey
+MD5: 00:8D:8E:DD:1C:CD:A5:C9:D3:59:1F:1C:F3:E5:BE:47
+SHA1: C0:22:93:C0:19:C3:6D:9B:B0:E5:58:98:A1:53:35:80:9C:C8:56:49
+SHA-256: EF:9B:44:C3:1B:33:1D:8A:82:FD:0B:FA:C1:A0:1B:B9:DF:4D:8B:60:09:BA:FC:FC:08:5F:66:8E:C0:18:6E:A6
+Valid until: Monday, 29 November, 2055
+----------
+
+[Incubating] Problems report is available at: file:///C:/Users/ACER/OneDrive/Documents/PROJECT%20ANTIGRAVITY/build/reports/problems/problems-report.html
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/8.14/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD SUCCESSFUL in 2s
+11 actionable tasks: 7 executed, 4 up-to-date

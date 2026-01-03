@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'theme/app_theme.dart';
 
 class AnalyticsScreen extends StatefulWidget {
   const AnalyticsScreen({super.key});
@@ -10,29 +11,28 @@ class AnalyticsScreen extends StatefulWidget {
 }
 
 class _AnalyticsScreenState extends State<AnalyticsScreen> {
-  String _selectedPeriod =
-      'Week'; // Changed default to Week to match one of the images
+  String _selectedPeriod = 'Week';
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F3ED),
+      backgroundColor: AppTheme.backgroundLight,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildHeader(),
-              const SizedBox(height: 16),
+              const SizedBox(height: 32),
               _buildSegmentedControl(),
-              const SizedBox(height: 16),
+              const SizedBox(height: 32),
               _buildPowerUsageCard(),
-              const SizedBox(height: 16),
+              const SizedBox(height: 24),
               _buildBreakdownCard(),
-              const SizedBox(height: 16),
+              const SizedBox(height: 24),
               _buildBottomMetrics(),
-              const SizedBox(height: 100), // Space for bottom nav
+              const SizedBox(height: 40),
             ],
           ),
         ),
@@ -41,61 +41,26 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
   }
 
   Widget _buildHeader() {
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Avatar
-        Container(
-          width: 50,
-          height: 50,
-          decoration: const BoxDecoration(
-            color: Color(0xFFFFB74D),
-            shape: BoxShape.circle,
-          ),
-          child: const Icon(
-            Icons.person,
-            color: Colors.white,
-            size: 30,
+        Text(
+          'ANALYTICS',
+          style: GoogleFonts.inter(
+            fontSize: 12,
+            fontWeight: FontWeight.w800,
+            color: AppTheme.midnightCharcoal.withOpacity(0.5),
+            letterSpacing: 1.2,
           ),
         ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Analytics',
-                style: GoogleFonts.inter(
-                  fontSize: 12,
-                  color: const Color(0xFF757575),
-                ),
-              ),
-              Text(
-                'Usage Trends',
-                style: GoogleFonts.inter(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.black,
-                ),
-              ),
-            ],
+        const SizedBox(height: 4),
+        Text(
+          'Usage Trends',
+          style: GoogleFonts.inter(
+            fontSize: 24,
+            fontWeight: FontWeight.w800,
+            color: AppTheme.midnightCharcoal,
           ),
-        ),
-        // Calendar Button
-        Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: const Icon(Icons.calendar_today_outlined, size: 20),
         ),
       ],
     );
@@ -106,32 +71,34 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(30),
+        color: AppTheme.midnightCharcoal.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: periods.map((period) {
           final isSelected = _selectedPeriod == period;
           return Expanded(
             child: GestureDetector(
               onTap: () => setState(() => _selectedPeriod = period),
-              child: Container(
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 decoration: BoxDecoration(
-                  color:
-                      isSelected ? const Color(0xFFEEFF41) : Colors.transparent,
-                  borderRadius: BorderRadius.circular(26),
+                  color: isSelected
+                      ? AppTheme.midnightCharcoal
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(14),
                 ),
                 child: Center(
                   child: Text(
                     period,
                     style: GoogleFonts.inter(
-                      fontSize: 11,
+                      fontSize: 13,
                       fontWeight:
                           isSelected ? FontWeight.w700 : FontWeight.w500,
-                      color:
-                          isSelected ? Colors.black : const Color(0xFF757575),
+                      color: isSelected
+                          ? Colors.white
+                          : AppTheme.midnightCharcoal.withOpacity(0.5),
                     ),
                   ),
                 ),
@@ -165,7 +132,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
       title = 'Weekly Usage';
       value = '142.8';
       unit = 'kWh';
-      trend = '-12%';
+      trend = '-8%';
       spots = const [
         FlSpot(0, 1.2),
         FlSpot(1, 1.8),
@@ -177,7 +144,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
       ];
       maxX = 6;
     } else if (_selectedPeriod == 'Month') {
-      title = 'Avg. Power Usage';
+      title = 'Avg. Power';
       value = '1.84';
       unit = 'kW';
       trend = '-4.2%';
@@ -207,17 +174,11 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
+        color: AppTheme.surfaceWhite,
+        borderRadius: BorderRadius.circular(30),
+        boxShadow: AppTheme.softShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -226,33 +187,27 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                title,
+                title.toUpperCase(),
                 style: GoogleFonts.inter(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  color: const Color(0xFF757575),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                  color: AppTheme.midnightCharcoal.withOpacity(0.4),
+                  letterSpacing: 1.0,
                 ),
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE8F5E9),
+                  color: Colors.green.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.trending_down,
-                        color: Color(0xFF4CAF50), size: 14),
-                    const SizedBox(width: 4),
-                    Text(
-                      trend,
-                      style: GoogleFonts.inter(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: const Color(0xFF4CAF50),
-                      ),
-                    ),
-                  ],
+                child: Text(
+                  trend,
+                  style: GoogleFonts.inter(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.green,
+                  ),
                 ),
               ),
             ],
@@ -264,43 +219,47 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
               Text(
                 value,
                 style: GoogleFonts.inter(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w800,
-                  color: Colors.black,
+                  fontSize: 32,
+                  fontWeight: FontWeight.w900,
+                  color: AppTheme.midnightCharcoal,
                 ),
               ),
-              const SizedBox(width: 4),
-              Text(
-                unit,
-                style: GoogleFonts.inter(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                  color: const Color(0xFF9E9E9E),
+              const SizedBox(width: 6),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: Text(
+                  unit,
+                  style: GoogleFonts.inter(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.midnightCharcoal.withOpacity(0.4),
+                  ),
                 ),
               ),
             ],
           ),
+          const SizedBox(height: 32),
           SizedBox(
-            height: 160,
+            height: 180,
             child: LineChart(
               LineChartData(
                 minX: 0,
                 maxX: maxX,
+                minY: 0,
                 gridData: FlGridData(
                   show: true,
                   drawVerticalLine: false,
                   horizontalInterval: 1,
                   getDrawingHorizontalLine: (value) {
                     return FlLine(
-                      color: const Color(0xFFEEEEEE),
+                      color: AppTheme.midnightCharcoal.withOpacity(0.05),
                       strokeWidth: 1,
                       dashArray: [5, 5],
                     );
                   },
                 ),
                 titlesData: FlTitlesData(
-                  leftTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false)),
+                  show: true,
                   rightTitles: const AxisTitles(
                       sideTitles: SideTitles(showTitles: false)),
                   topTitles: const AxisTitles(
@@ -308,73 +267,75 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                   bottomTitles: AxisTitles(
                     sideTitles: SideTitles(
                       showTitles: true,
+                      reservedSize: 30,
+                      interval: _getIntervalForPeriod(),
                       getTitlesWidget: (value, meta) {
-                        const style =
-                            TextStyle(color: Color(0xFF9E9E9E), fontSize: 10);
-                        if (_selectedPeriod == 'Day') {
-                          switch (value.toInt()) {
-                            case 0:
-                              return const Text('00:00', style: style);
-                            case 6:
-                              return const Text('06:00', style: style);
-                            case 12:
-                              return const Text('12:00', style: style);
-                            case 18:
-                              return const Text('18:00', style: style);
-                            case 24:
-                              return const Text('24:00', style: style);
-                          }
-                        } else if (_selectedPeriod == 'Week') {
-                          final days = ['Mon', 'Wed', 'Fri', 'Sun'];
-                          if (value % 2 == 0) {
-                            return Text(days[(value / 2).toInt()],
-                                style: style);
-                          }
-                        } else if (_selectedPeriod == 'Month') {
-                          final dates = [
-                            'Oct 1',
-                            'Oct 8',
-                            'Oct 15',
-                            'Oct 22',
-                            'Oct 29'
-                          ];
-                          if (value % 7 == 0) {
-                            return Text(dates[(value / 7).toInt()],
-                                style: style);
-                          }
-                        } else if (_selectedPeriod == 'Year') {
-                          final months = [
-                            'Jan',
-                            'Mar',
-                            'May',
-                            'Jul',
-                            'Sep',
-                            'Nov'
-                          ];
-                          if (value % 2 == 0) {
-                            return Text(months[(value / 2).toInt()],
-                                style: style);
-                          }
-                        }
-                        return const Text('');
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 8.0),
+                          child: Text(
+                            _getLabelForValue(value),
+                            style: GoogleFonts.inter(
+                              color: AppTheme.midnightCharcoal.withOpacity(0.4),
+                              fontWeight: FontWeight.w600,
+                              fontSize: 11,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  leftTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      interval: 1,
+                      reservedSize: 30,
+                      getTitlesWidget: (value, meta) {
+                        if (value == 0) return const SizedBox.shrink();
+                        return Text(
+                          value.toInt().toString(),
+                          style: GoogleFonts.inter(
+                            color: AppTheme.midnightCharcoal.withOpacity(0.3),
+                            fontWeight: FontWeight.w600,
+                            fontSize: 11,
+                          ),
+                        );
                       },
                     ),
                   ),
                 ),
                 borderData: FlBorderData(show: false),
+                lineTouchData: LineTouchData(
+                  touchTooltipData: LineTouchTooltipData(
+                    getTooltipColor: (touchedSpot) => AppTheme.midnightCharcoal,
+                    tooltipRoundedRadius: 8,
+                    getTooltipItems: (List<LineBarSpot> touchedBarSpots) {
+                      return touchedBarSpots.map((barSpot) {
+                        final flSpot = barSpot;
+                        return LineTooltipItem(
+                          '${flSpot.y} $unit',
+                          GoogleFonts.inter(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
+                        );
+                      }).toList();
+                    },
+                  ),
+                ),
                 lineBarsData: [
                   LineChartBarData(
                     spots: spots,
                     isCurved: true,
-                    color: const Color(0xFFEEFF41),
+                    color: AppTheme.primaryGold,
                     barWidth: 4,
                     dotData: const FlDotData(show: false),
                     belowBarData: BarAreaData(
                       show: true,
                       gradient: LinearGradient(
                         colors: [
-                          const Color(0xFFEEFF41).withOpacity(0.3),
-                          const Color(0xFFEEFF41).withOpacity(0.0),
+                          AppTheme.primaryGold.withOpacity(0.2),
+                          AppTheme.primaryGold.withOpacity(0.0),
                         ],
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
@@ -390,33 +351,71 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     );
   }
 
+  double _getIntervalForPeriod() {
+    switch (_selectedPeriod) {
+      case 'Day':
+        return 6;
+      case 'Week':
+        return 1;
+      case 'Month':
+        return 7;
+      case 'Year':
+        return 2;
+      default:
+        return 1;
+    }
+  }
+
+  String _getLabelForValue(double value) {
+    if (_selectedPeriod == 'Day') {
+      int hour = value.toInt();
+      if (hour == 0) return '12AM';
+      if (hour == 12) return '12PM';
+      if (hour == 24) return '12AM';
+      return hour > 12 ? '${hour - 12}PM' : '${hour}AM';
+    } else if (_selectedPeriod == 'Week') {
+      const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+      if (value < 0 || value >= days.length) return '';
+      return days[value.toInt()];
+    } else if (_selectedPeriod == 'Month') {
+      int day = value.toInt() + 1;
+      return '$day';
+    } else if (_selectedPeriod == 'Year') {
+      const months = [
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec'
+      ];
+      if (value < 0 || value >= months.length) return '';
+      return months[value.toInt()];
+    }
+    return '';
+  }
+
   Widget _buildBreakdownCard() {
-    String title = 'Daily Consumption';
-    String subtitle = 'Last 7 Days';
+    String title = 'Daily Usage';
     int count = 7;
-    List<String> labels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
     List<double> values = [5, 7, 10, 6, 4, 8, 3];
     int activeIndex = 2;
 
     if (_selectedPeriod == 'Week') {
-      title = 'Breakdown';
-      subtitle = 'This Week';
-      labels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
       values = [4, 6, 3, 9, 5, 2, 2];
       activeIndex = 3;
     } else if (_selectedPeriod == 'Month') {
-      title = 'Daily Consumption';
-      subtitle = 'October 2023';
       count = 30;
-      labels = List.generate(30, (i) => (i + 1).toString());
       values = List.generate(30, (i) => (5 + (i % 5)).toDouble());
-      values[16] = 10; // Highlight one
       activeIndex = 16;
     } else if (_selectedPeriod == 'Year') {
-      title = 'Monthly Consumption';
-      subtitle = 'Year 2024';
       count = 12;
-      labels = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'];
       values = [5, 6, 5, 7, 8, 9, 11, 10, 8, 6, 5, 6];
       activeIndex = 6;
     }
@@ -425,37 +424,21 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(32),
+        color: AppTheme.surfaceWhite,
+        borderRadius: BorderRadius.circular(30),
+        boxShadow: AppTheme.softShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: GoogleFonts.inter(
-                      fontSize: 15,
-                      color: const Color(0xFF757575),
-                    ),
-                  ),
-                  Text(
-                    subtitle,
-                    style: GoogleFonts.inter(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.black,
-                    ),
-                  ),
-                ],
-              ),
-              const Icon(Icons.more_horiz, color: Color(0xFF9E9E9E)),
-            ],
+          Text(
+            title.toUpperCase(),
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              color: AppTheme.midnightCharcoal.withOpacity(0.4),
+              letterSpacing: 1.0,
+            ),
           ),
           const SizedBox(height: 24),
           SizedBox(
@@ -464,46 +447,80 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
               BarChartData(
                 gridData: const FlGridData(show: false),
                 titlesData: FlTitlesData(
-                  leftTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false)),
+                  show: true,
                   rightTitles: const AxisTitles(
                       sideTitles: SideTitles(showTitles: false)),
                   topTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false)),
+                  leftTitles: const AxisTitles(
                       sideTitles: SideTitles(showTitles: false)),
                   bottomTitles: AxisTitles(
                     sideTitles: SideTitles(
                       showTitles: true,
                       getTitlesWidget: (value, meta) {
-                        const style =
-                            TextStyle(color: Color(0xFF9E9E9E), fontSize: 10);
-                        if (value >= 0 && value < count) {
-                          bool isSelected = value == activeIndex;
-                          String text = labels[value.toInt()];
-                          // For month, only show 1, 5, 10, 15, 20, 25, 30
-                          if (_selectedPeriod == 'Month') {
-                            int day = value.toInt() + 1;
-                            if (day != 1 && day % 5 != 0 && day != 30) {
-                              return const Text('');
-                            }
-                          }
-                          return Text(
-                            text,
-                            style: style.copyWith(
-                              fontWeight: isSelected
-                                  ? FontWeight.w900
-                                  : FontWeight.w500,
-                              color: isSelected
-                                  ? Colors.black
-                                  : const Color(0xFF9E9E9E),
-                            ),
-                          );
+                        // Only show labels for Bar Chart based on index
+                        int index = value.toInt();
+                        if (index < 0 || index >= count)
+                          return const SizedBox.shrink();
+
+                        String text = '';
+                        if (_selectedPeriod == 'Week') {
+                          const days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+                          text = days[index % 7];
+                        } else if (_selectedPeriod == 'Year') {
+                          const months = [
+                            'J',
+                            'F',
+                            'M',
+                            'A',
+                            'M',
+                            'J',
+                            'J',
+                            'A',
+                            'S',
+                            'O',
+                            'N',
+                            'D'
+                          ];
+                          text = months[index % 12];
+                        } else {
+                          // Simplify month/day view to show fewer labels to avoid clutter
+                          if (index % 5 != 0) return const SizedBox.shrink();
+                          text = '${index + 1}';
                         }
-                        return const Text('');
+
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 8.0),
+                          child: Text(
+                            text,
+                            style: GoogleFonts.inter(
+                              color: AppTheme.midnightCharcoal.withOpacity(0.4),
+                              fontWeight: FontWeight.w600,
+                              fontSize: 11,
+                            ),
+                          ),
+                        );
                       },
                     ),
                   ),
                 ),
                 borderData: FlBorderData(show: false),
+                barTouchData: BarTouchData(
+                  touchTooltipData: BarTouchTooltipData(
+                    getTooltipColor: (group) => AppTheme.midnightCharcoal,
+                    tooltipRoundedRadius: 8,
+                    getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                      return BarTooltipItem(
+                        rod.toY.toString(),
+                        GoogleFonts.inter(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        ),
+                      );
+                    },
+                  ),
+                ),
                 barGroups: List.generate(count, (i) {
                   return BarChartGroupData(
                     x: i,
@@ -511,15 +528,10 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                       BarChartRodData(
                         toY: values[i],
                         color: i == activeIndex
-                            ? const Color(0xFFEEFF41)
-                            : const Color(0xFFE0E0E0),
-                        width: _selectedPeriod == 'Month' ? 6 : 18,
-                        borderRadius: BorderRadius.circular(10),
-                        backDrawRodData: BackgroundBarChartRodData(
-                          show: true,
-                          toY: values.reduce((a, b) => a > b ? a : b) + 2,
-                          color: const Color(0xFFF5F5F5),
-                        ),
+                            ? AppTheme.primaryGold
+                            : AppTheme.midnightCharcoal.withOpacity(0.05),
+                        width: _selectedPeriod == 'Month' ? 6 : 14,
+                        borderRadius: BorderRadius.circular(4),
                       ),
                     ],
                   );
@@ -533,123 +545,65 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
   }
 
   Widget _buildBottomMetrics() {
-    String peakValue = '4.2';
-    String peakSubtitle = 'Today at 18:00';
-    String costValue = '₹12.50';
-    String costSubtitle = 'Daily Average';
-
-    if (_selectedPeriod == 'Week') {
-      peakValue = '4.2';
-      peakSubtitle = 'Thu at 19:30';
-      costValue = '₹34.50';
-      costSubtitle = 'This Week';
-    } else if (_selectedPeriod == 'Month') {
-      peakValue = '5.8';
-      peakSubtitle = 'Oct 12 at 18:00';
-      costValue = '₹145.20';
-      costSubtitle = 'Month to date';
-    } else if (_selectedPeriod == 'Year') {
-      peakValue = '5.8';
-      peakSubtitle = 'July 15 at 14:00';
-      costValue = '₹1,840';
-      costSubtitle = 'Yearly Total';
-    }
-
     return Row(
       children: [
         Expanded(
-          child: _buildMetricCard(
-            label: 'PEAK LOAD',
-            value: peakValue,
-            unit: 'kW',
-            subtitle: peakSubtitle,
-            icon: Icons.bolt,
-            iconColor: const Color(0xFFFF9800),
-            bgColor: const Color(0xFFFFF7EC),
-          ),
+          child: _buildMetricMiniCard(
+              'Peak Load', '4.2', 'kW', Icons.bolt_rounded),
         ),
         const SizedBox(width: 16),
         Expanded(
-          child: _buildMetricCard(
-            label: 'EST. COST',
-            value: costValue,
-            unit: '',
-            subtitle: costSubtitle,
-            icon: Icons.account_balance_wallet_outlined,
-            iconColor: const Color(0xFF2196F3),
-            bgColor: const Color(0xFFF0F7FF),
-          ),
+          child: _buildMetricMiniCard(
+              'Est. Bill', '₹240', '', Icons.receipt_long_rounded),
         ),
       ],
     );
   }
 
-  Widget _buildMetricCard({
-    required String label,
-    required String value,
-    required String unit,
-    required String subtitle,
-    required IconData icon,
-    required Color iconColor,
-    required Color bgColor,
-  }) {
+  Widget _buildMetricMiniCard(
+      String label, String value, String unit, IconData icon) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: bgColor,
+        color: AppTheme.surfaceWhite,
         borderRadius: BorderRadius.circular(24),
+        boxShadow: AppTheme.softShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Icon(icon, color: iconColor, size: 20),
-              const SizedBox(width: 8),
-              Text(
-                label,
-                style: GoogleFonts.inter(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  color: iconColor,
-                ),
-              ),
-            ],
+          Icon(icon, color: AppTheme.primaryGold, size: 20),
+          const SizedBox(height: 12),
+          Text(
+            label,
+            style: GoogleFonts.inter(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: AppTheme.midnightCharcoal.withOpacity(0.4),
+            ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 4),
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
                 value,
                 style: GoogleFonts.inter(
-                  fontSize: 24,
+                  fontSize: 20,
                   fontWeight: FontWeight.w800,
-                  color: Colors.black,
+                  color: AppTheme.midnightCharcoal,
                 ),
               ),
-              if (unit.isNotEmpty) ...[
-                const SizedBox(width: 4),
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 3),
-                  child: Text(
-                    unit,
-                    style: GoogleFonts.inter(
-                      fontSize: 14,
-                      color: const Color(0xFF757575),
-                    ),
-                  ),
+              const SizedBox(width: 2),
+              Text(
+                unit,
+                style: GoogleFonts.inter(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.midnightCharcoal.withOpacity(0.3),
                 ),
-              ],
+              ),
             ],
-          ),
-          const SizedBox(height: 4),
-          Text(
-            subtitle,
-            style: GoogleFonts.inter(
-              fontSize: 12,
-              color: const Color(0xFF757575),
-            ),
           ),
         ],
       ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'notifications_screen.dart';
+import 'theme/app_theme.dart';
 
 class BillSavingsScreen extends StatefulWidget {
   const BillSavingsScreen({super.key});
@@ -13,105 +14,95 @@ class _BillSavingsScreenState extends State<BillSavingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F3ED),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildHeader(),
-            const SizedBox(height: 12),
-            _buildMainBillingCard(),
-            const SizedBox(height: 12),
-            _buildBreakdownSection(),
-            const SizedBox(height: 16),
-            _buildSmartSavingsSection(),
-            const SizedBox(height: 16),
-            _buildBillingHistorySection(),
-            const SizedBox(height: 100), // Spacing for bottom nav
-          ],
+      backgroundColor: AppTheme.backgroundLight,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildHeader(),
+              const SizedBox(height: 32),
+              _buildMainBillingCard(),
+              const SizedBox(height: 32),
+              _buildBreakdownSection(),
+              const SizedBox(height: 32),
+              _buildSmartSavingsSection(),
+              const SizedBox(height: 40),
+            ],
+          ),
         ),
       ),
     );
   }
 
   Widget _buildHeader() {
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          width: 50,
-          height: 50,
-          decoration: const BoxDecoration(
-            color: Color(0xFFFFB74D),
-            shape: BoxShape.circle,
-          ),
-          child: const Icon(
-            Icons.person,
-            color: Colors.white,
-            size: 30,
+        Text(
+          'FINANCIALS',
+          style: GoogleFonts.inter(
+            fontSize: 12,
+            fontWeight: FontWeight.w800,
+            color: AppTheme.midnightCharcoal.withOpacity(0.5),
+            letterSpacing: 1.2,
           ),
         ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Financials',
-                style: GoogleFonts.inter(
-                  fontSize: 12,
-                  color: const Color(0xFF757575),
-                ),
+        const SizedBox(height: 4),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Bill & Savings',
+              style: GoogleFonts.inter(
+                fontSize: 24,
+                fontWeight: FontWeight.w800,
+                color: AppTheme.midnightCharcoal,
               ),
-              Text(
-                'Bill & Savings',
-                style: GoogleFonts.inter(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.black,
-                ),
-              ),
-            ],
-          ),
-        ),
-        InkWell(
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const NotificationsScreen(),
-              ),
-            );
-          },
-          borderRadius: BorderRadius.circular(20),
-          child: Container(
-            width: 40,
-            height: 40,
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.circle,
             ),
-            child: const Icon(
-              Icons.notifications,
-              color: Colors.black,
-              size: 22,
+            _buildCircleButton(
+              icon: Icons.notifications_none_rounded,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const NotificationsScreen()),
+                );
+              },
             ),
-          ),
+          ],
         ),
       ],
+    );
+  }
+
+  Widget _buildCircleButton(
+      {required IconData icon, required VoidCallback onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 44,
+        height: 44,
+        decoration: BoxDecoration(
+          color: AppTheme.midnightCharcoal.withOpacity(0.05),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(icon, color: AppTheme.midnightCharcoal, size: 22),
+      ),
     );
   }
 
   Widget _buildMainBillingCard() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(28),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        color: AppTheme.midnightCharcoal,
+        borderRadius: BorderRadius.circular(30),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withAlpha(5),
+            color: AppTheme.midnightCharcoal.withOpacity(0.2),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -123,34 +114,28 @@ class _BillSavingsScreenState extends State<BillSavingsScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  const Icon(Icons.calendar_today_outlined,
-                      size: 16, color: Color(0xFF757575)),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Oct 1 - Oct 31',
-                    style: GoogleFonts.inter(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: const Color(0xFF757575),
-                    ),
-                  ),
-                ],
+              Text(
+                'OCTOBER 2023',
+                style: GoogleFonts.inter(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white54,
+                  letterSpacing: 1.2,
+                ),
               ),
               Container(
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFFF7EC),
-                  borderRadius: BorderRadius.circular(12),
+                  color: AppTheme.primaryGold.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
                   'Due in 5 days',
                   style: GoogleFonts.inter(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFFFF9800),
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                    color: AppTheme.primaryGold,
                   ),
                 ),
               ),
@@ -158,108 +143,53 @@ class _BillSavingsScreenState extends State<BillSavingsScreen> {
           ),
           const SizedBox(height: 24),
           Text(
-            'Total Amount',
+            '₹842.50',
             style: GoogleFonts.inter(
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-              color: const Color(0xFF9E9E9E),
+              fontSize: 40,
+              fontWeight: FontWeight.w900,
+              color: Colors.white,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 24),
           Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text(
-                '₹84',
-                style: GoogleFonts.inter(
-                  fontSize: 32,
-                  fontWeight: FontWeight.w800,
-                  color: Colors.black,
-                  height: 1.0,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'EST. TOTAL',
+                      style: GoogleFonts.inter(
+                          fontSize: 10,
+                          color: Colors.white38,
+                          fontWeight: FontWeight.w800),
+                    ),
+                    Text(
+                      '₹1,240',
+                      style: GoogleFonts.inter(
+                          fontSize: 16,
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700),
+                    ),
+                  ],
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Text(
-                  '.50',
-                  style: GoogleFonts.inter(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.black,
+              SizedBox(
+                height: 48,
+                child: ElevatedButton(
+                  onPressed: () => _showPaymentSuccessDialog(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryGold,
+                    foregroundColor: AppTheme.midnightCharcoal,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16)),
                   ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 32),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Current',
-                style: GoogleFonts.inter(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black,
-                ),
-              ),
-              Text(
-                'Projected: ₹110.00',
-                style: GoogleFonts.inter(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  color: const Color(0xFF757575),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Container(
-            height: 10,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: const Color(0xFFF5F5F5),
-              borderRadius: BorderRadius.circular(5),
-            ),
-            child: FractionallySizedBox(
-              alignment: Alignment.centerLeft,
-              widthFactor: 0.7,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEEFF41),
-                  borderRadius: BorderRadius.circular(5),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Budget: ₹125.00',
-                style: GoogleFonts.inter(
-                  fontSize: 12,
-                  color: const Color(0xFF9E9E9E),
-                ),
-              ),
-              ElevatedButton(
-                onPressed: () => _showPaymentSuccessDialog(context),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFEEFF41),
-                  foregroundColor: Colors.black,
-                  elevation: 0,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                ),
-                child: Text(
-                  'PAY NOW',
-                  style: GoogleFonts.inter(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 14,
+                  child: Text(
+                    'PAY NOW',
+                    style: GoogleFonts.inter(
+                        fontWeight: FontWeight.w900, fontSize: 13),
                   ),
                 ),
               ),
@@ -274,53 +204,45 @@ class _BillSavingsScreenState extends State<BillSavingsScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        backgroundColor: AppTheme.surfaceWhite,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
             Container(
-              padding: const EdgeInsets.all(16),
-              decoration: const BoxDecoration(
-                color: Color(0xFFE8F5E9),
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                color: Colors.green.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.check_circle,
-                  color: Color(0xFF4CAF50), size: 48),
+              child: const Icon(Icons.check_rounded,
+                  color: Colors.green, size: 40),
             ),
             const SizedBox(height: 24),
             Text(
-              'Payment Successful!',
+              'Payment Done!',
               style: GoogleFonts.inter(
-                fontSize: 20,
-                fontWeight: FontWeight.w800,
-                color: Colors.black,
-              ),
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  color: AppTheme.midnightCharcoal),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
             Text(
-              'Your payment of ₹84.50 has been processed successfully.',
+              'Your transaction of ₹842.50 has been completed successfully.',
               textAlign: TextAlign.center,
               style: GoogleFonts.inter(
-                fontSize: 14,
-                color: const Color(0xFF757575),
-              ),
+                  fontSize: 14, color: Colors.black45, height: 1.5),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 32),
             SizedBox(
               width: double.infinity,
+              height: 56,
               child: ElevatedButton(
                 onPressed: () => Navigator.pop(context),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.black,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                ),
-                child: const Text('Back to Home'),
+                style: AppTheme.primaryButtonStyle,
+                child: const Text('Back to Dashboard'),
               ),
             ),
           ],
@@ -330,137 +252,77 @@ class _BillSavingsScreenState extends State<BillSavingsScreen> {
   }
 
   Widget _buildBreakdownSection() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'BILL BREAKDOWN',
+          style: GoogleFonts.inter(
+            fontSize: 12,
+            fontWeight: FontWeight.w800,
+            color: AppTheme.midnightCharcoal.withOpacity(0.5),
+            letterSpacing: 1.2,
+          ),
+        ),
+        const SizedBox(height: 20),
+        Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: AppTheme.surfaceWhite,
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: AppTheme.softShadow,
+          ),
+          child: Column(
             children: [
-              Text(
-                'Breakdown',
-                style: GoogleFonts.inter(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.black,
-                ),
-              ),
-              InkWell(
-                onTap: () => _showPaymentSuccessDialog(context),
-                borderRadius: BorderRadius.circular(12),
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFEEFF41),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    'PAY NOW',
-                    style: GoogleFonts.inter(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.black,
-                    ),
-                  ),
-                ),
-              ),
+              _buildBreakdownItem('Usage Charges', '412 kWh × ₹0.14', '₹576.80',
+                  Icons.bolt_rounded, Colors.blue),
+              const Divider(height: 48, color: Colors.black12),
+              _buildBreakdownItem('Service Fee', 'Fixed daily rate', '₹150.00',
+                  Icons.settings_input_component_rounded, Colors.purple),
+              const Divider(height: 48, color: Colors.black12),
+              _buildBreakdownItem('Local Taxes', 'State & Gov Levies',
+                  '₹115.70', Icons.receipt_long_rounded, Colors.orange),
             ],
           ),
-          const SizedBox(height: 24),
-          _buildBreakdownItem(
-            icon: Icons.bolt,
-            iconColor: const Color(0xFF2196F3),
-            bgColor: const Color(0xFFE3F2FD),
-            title: 'Usage Charges',
-            subtitle: '412 kWh × ₹0.14',
-            amount: '₹57.68',
-          ),
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 16),
-            child: Divider(height: 1, color: Color(0xFFEEEEEE)),
-          ),
-          _buildBreakdownItem(
-            icon: Icons.card_giftcard,
-            iconColor: const Color(0xFF9C27B0),
-            bgColor: const Color(0xFFF3E5F5),
-            title: 'Service Fee',
-            subtitle: 'Fixed daily rate',
-            amount: '₹15.00',
-          ),
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 16),
-            child: Divider(height: 1, color: Color(0xFFEEEEEE)),
-          ),
-          _buildBreakdownItem(
-            icon: Icons.receipt,
-            iconColor: const Color(0xFF757575),
-            bgColor: const Color(0xFFF5F5F5),
-            title: 'Taxes & Levies',
-            subtitle: 'State & Local',
-            amount: '₹11.82',
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
-  Widget _buildBreakdownItem({
-    required IconData icon,
-    required Color iconColor,
-    required Color bgColor,
-    required String title,
-    required String subtitle,
-    required String amount,
-  }) {
+  Widget _buildBreakdownItem(String title, String subtitle, String amount,
+      IconData icon, Color color) {
     return Row(
       children: [
         Container(
-          width: 40,
-          height: 40,
+          width: 48,
+          height: 48,
           decoration: BoxDecoration(
-            color: bgColor,
-            borderRadius: BorderRadius.circular(12),
+            color: color.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(14),
           ),
-          child: Icon(icon, color: iconColor, size: 24),
+          child: Icon(icon, color: color, size: 24),
         ),
         const SizedBox(width: 16),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                title,
-                style: GoogleFonts.inter(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.black,
-                ),
-              ),
-              Text(
-                subtitle,
-                style: GoogleFonts.inter(
-                  fontSize: 11,
-                  color: const Color(0xFF9E9E9E),
-                ),
-              ),
+              Text(title,
+                  style: GoogleFonts.inter(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.midnightCharcoal)),
+              Text(subtitle,
+                  style:
+                      GoogleFonts.inter(fontSize: 12, color: Colors.black38)),
             ],
           ),
         ),
-        Text(
-          amount,
-          style: GoogleFonts.inter(
-            fontSize: 15,
-            fontWeight: FontWeight.w800,
-            color: Colors.black,
-          ),
-        ),
+        Text(amount,
+            style: GoogleFonts.inter(
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+                color: AppTheme.midnightCharcoal)),
       ],
     );
   }
@@ -470,36 +332,26 @@ class _BillSavingsScreenState extends State<BillSavingsScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Smart Savings',
+          'SMART SAVINGS',
           style: GoogleFonts.inter(
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-            color: Colors.black,
+            fontSize: 12,
+            fontWeight: FontWeight.w800,
+            color: AppTheme.midnightCharcoal.withOpacity(0.5),
+            letterSpacing: 1.2,
           ),
         ),
-        const SizedBox(height: 16),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
+        const SizedBox(height: 20),
+        SizedBox(
+          height: 180,
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            clipBehavior: Clip.none,
             children: [
-              _buildSavingsCard(
-                icon: Icons.savings_outlined,
-                iconColor: const Color(0xFF4CAF50),
-                bgColor: const Color(0xFFE8F5E9),
-                title: 'Phantom Power',
-                description: 'Unplug unused devices to save on standby...',
-                impact: '+₹12/mo',
-              ),
+              _buildSavingsCard('Phantom Power', 'Discard unused apps...',
+                  'SAVE ₹120/mo', Icons.electric_bolt_rounded, Colors.green),
               const SizedBox(width: 16),
-              _buildSavingsCard(
-                icon: Icons.lightbulb_outline,
-                iconColor: const Color(0xFFFF9800),
-                bgColor: const Color(0xFFFFF3E0),
-                title: 'AC Schedule',
-                description: 'Optimizing your thermostat can cut...',
-                impact: 'High Impact',
-                isYellow: true,
-              ),
+              _buildSavingsCard('AC Schedule', 'Optimize thermostatic...',
+                  'SAVE ₹450/mo', Icons.ac_unit_rounded, AppTheme.primaryGold),
             ],
           ),
         ),
@@ -507,25 +359,15 @@ class _BillSavingsScreenState extends State<BillSavingsScreen> {
     );
   }
 
-  Widget _buildSavingsCard({
-    required IconData icon,
-    required Color iconColor,
-    required Color bgColor,
-    required String title,
-    required String description,
-    required String impact,
-    bool isYellow = false,
-  }) {
+  Widget _buildSavingsCard(
+      String title, String desc, String impact, IconData icon, Color color) {
     return Container(
-      width: 200,
-      padding: const EdgeInsets.all(20),
+      width: 250,
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: isYellow ? const Color(0xFFFEF9E7) : const Color(0xFFF1FDF6),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: isYellow ? const Color(0xFFFCF3CF) : const Color(0xFFD4EFDF),
-          width: 1,
-        ),
+        color: AppTheme.surfaceWhite,
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: AppTheme.softShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -533,165 +375,32 @@ class _BillSavingsScreenState extends State<BillSavingsScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
+              Icon(icon, color: color, size: 28),
               Container(
-                width: 36,
-                height: 36,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: bgColor,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(icon, color: iconColor, size: 20),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
+                  color: color.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
                   impact,
                   style: GoogleFonts.inter(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.black,
-                  ),
+                      fontSize: 10, fontWeight: FontWeight.w800, color: color),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          Text(
-            title,
-            style: GoogleFonts.inter(
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
-              color: Colors.black,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            description,
-            style: GoogleFonts.inter(
-              fontSize: 12,
-              color: const Color(0xFF757575),
-              height: 1.4,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBillingHistorySection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'Billing History',
+          const Spacer(),
+          Text(title,
               style: GoogleFonts.inter(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: Colors.black,
-              ),
-            ),
-            GestureDetector(
-              onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                      content: Text('Full billing history coming soon')),
-                );
-              },
-              child: Text(
-                'See All',
-                style: GoogleFonts.inter(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: const Color(
-                      0xFFE5BB00), // Adjusted to be visible on background
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: [
-              _buildHistoryCard(
-                month: 'September',
-                amount: '₹92.40',
-                status: 'Paid',
-              ),
-              const SizedBox(width: 16),
-              _buildHistoryCard(
-                month: 'August',
-                amount: '₹145.20',
-                status: 'Paid',
-              ),
-              const SizedBox(width: 16),
-              _buildHistoryCard(
-                month: 'July',
-                amount: '₹132.00',
-                status: 'Paid',
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildHistoryCard({
-    required String month,
-    required String amount,
-    required String status,
-  }) {
-    return Container(
-      width: 160,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            month,
-            style: GoogleFonts.inter(
-              fontSize: 13,
-              color: const Color(0xFF9E9E9E),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            amount,
-            style: GoogleFonts.inter(
-              fontSize: 20,
-              fontWeight: FontWeight.w800,
-              color: Colors.black,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              const Icon(Icons.check_circle,
-                  color: Color(0xFF4CAF50), size: 16),
-              const SizedBox(width: 4),
-              Text(
-                status,
-                style: GoogleFonts.inter(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: const Color(0xFF4CAF50),
-                ),
-              ),
-            ],
-          ),
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  color: AppTheme.midnightCharcoal)),
+          const SizedBox(height: 4),
+          Text(desc,
+              style: GoogleFonts.inter(
+                  fontSize: 12, color: Colors.black38, height: 1.4)),
         ],
       ),
     );
