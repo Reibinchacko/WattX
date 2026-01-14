@@ -1,0 +1,55 @@
+{
+    "Users": {
+        "SAMPLE_USER_UID": {
+            "name": "John Doe",
+            "email": "john.doe@example.com",
+            "role": "user",
+            "isActive": true,
+            "budgetLimit": 150.0,
+            "currency": "₹",
+            "createdAt": 1704067200000
+        },
+        "SAMPLE_OFFICER_UID": {
+            "name": "Officer Smith",
+            "email": "smith.kseb@example.com",
+            "role": "officer",
+            "isActive": true,
+            "createdAt": 1704067200000
+        }
+    },
+    "Devices": {
+        "METER001": {
+            "ownerUid": "SAMPLE_USER_UID",
+            "address": "123 Smart St, Energy City",
+            "status": "Online",
+            "firmwareVersion": "v1.0.0",
+            "lastSync": 1705214400000
+        }
+    },
+    "EnergyReadings": {
+        "live": {
+            "METER001": {
+                "power": 1.2,
+                "voltage": 230.5,
+                "current": 5.2,
+                "timestamp": 1705214400000
+            }
+        }
+    },
+    "Alerts": {
+        "SAMPLE_USER_UID": {
+            "welcome_alert": {
+                "title": "Welcome to WattX",
+                "message": "Your smart meter is now active and monitoring.",
+                "type": "info",
+                "timestamp": 1705214400000,
+                "isRead": false
+            }
+        }
+    },
+    "OfficerAssignments": {
+        "SAMPLE_OFFICER_UID": {
+            "SAMPLE_USER_UID": true
+        }
+    }
+}

@@ -1,0 +1,42 @@
+{
+    "rules": {
+        "Users": {
+            "$uid": {
+                ".read": "auth != null",
+                ".write": "auth != null && auth.uid == $uid"
+            }
+        },
+        "Devices": {
+            "$meterId": {
+                ".read": "auth != null",
+                ".write": "auth != null && (data.child('ownerUid').val() == auth.uid || !data.exists())"
+            }
+        },
+        "EnergyReadings": {
+            "live": {
+                "$meterId": {
+                    ".read": "auth != null",
+                    ".write": "auth != null"
+                }
+            },
+            "historical": {
+                "$meterId": {
+                    ".read": "auth != null",
+                    ".write": "auth != null"
+                }
+            }
+        },
+        "Alerts": {
+            "$uid": {
+                ".read": "auth != null && auth.uid == $uid",
+                ".write": "auth != null && auth.uid == $uid"
+            }
+        },
+        "OfficerAssignments": {
+            "$officerUid": {
+                ".read": "auth != null && auth.uid == $officerUid",
+                ".write": "false"
+            }
+        }
+    }
+}

@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "350835321492",
+    "firebase_url": "https://wattx-16024-default-rtdb.firebaseio.com",
+    "project_id": "wattx-16024",
+    "storage_bucket": "wattx-16024.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:350835321492:android:2195ce3e367531eecc6281",
+        "android_client_info": {
+          "package_name": "com.example.energy_monitor"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "350835321492-sj1339krvf7gdvvmrd6cdvo7v0cknspv.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.energy_monitor",
+            "certificate_hash": "c02293c019c36d9bb0e55898a15335809cc85649"
+          }
+        },
+        {
+          "client_id": "350835321492-uav9a3jfgr25pjria4biik8s8aun41sc.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB2BoOFZrtoK2uFaItzRGBTdZ2xT2pxdI4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "350835321492-uav9a3jfgr25pjria4biik8s8aun41sc.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
