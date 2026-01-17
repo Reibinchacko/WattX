@@ -51,5 +51,17 @@
         "SAMPLE_OFFICER_UID": {
             "SAMPLE_USER_UID": true
         }
+    },
+    "Complaints": {
+        "SAMPLE_USER_UID": {
+            "sample_complaint_id": {
+                "title": "High Bill Discrepancy",
+                "description": "My bill for January seems much higher than my actual usage. Please verify the reading.",
+                "category": "Billing",
+                "status": "Open",
+                "timestamp": 1705400000000,
+                "lastUpdated": 1705400000000
+            }
+        }
     }
 }

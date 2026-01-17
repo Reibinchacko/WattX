@@ -154,3 +154,19 @@ Broadcast messages from administrative officers.
 | `expiryDate` | Timestamp | When the notice should be removed |
 | `authorName` | String | Name of the officer who posted it |
 | `createdAt` | Timestamp | Posting time |
+
+---
+
+## Node: `Complaints`
+Stores user-submitted complaints and feedback.
+
+**Path**: `Complaints/{uid}/{complaintId}`
+
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| `title` | String | Short title of the complaint |
+| `description` | String | Detailed issue description |
+| `category` | String | e.g., `Billing`, `Power Outage`, `Meter Issue`, `Other` |
+| `status` | String | `Open`, `In Progress`, or `Resolved` |
+| `timestamp` | Timestamp | Submission time |
+| `lastUpdated` | Timestamp | Last status change time |

@@ -9,6 +9,7 @@ import '../models/payment_model.dart';
 import '../models/tariff_model.dart';
 import '../models/service_request_model.dart';
 import '../models/notice_model.dart';
+import '../models/complaint_model.dart';
 
 class DatabaseService {
   final FirebaseDatabase _db = FirebaseDatabase.instance;
@@ -174,6 +175,13 @@ class DatabaseService {
       }
       return [];
     });
+  }
+
+  // --- Complaints ---
+
+  Future<void> submitComplaint(String uid, ComplaintModel complaint) async {
+    final ref = _db.ref('Complaints/$uid').push();
+    await ref.set(complaint.toMap());
   }
 
   // --- Initial Data Seeding ---

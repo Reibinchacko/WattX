@@ -8,6 +8,7 @@ import 'theme/theme_provider.dart';
 
 import 'services/database_service.dart';
 import 'models/user_model.dart';
+import 'register_complaint_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -63,6 +64,8 @@ class _ProfileContentState extends State<ProfileContent> {
                 _buildAppPreferences(themeProvider, isDark),
                 const SizedBox(height: 32),
                 _buildPrivacySettings(isDark),
+                const SizedBox(height: 32),
+                _buildSupportSection(isDark),
                 const SizedBox(height: 32),
                 _buildLogOutButton(isDark),
                 const SizedBox(height: 12),
@@ -273,6 +276,43 @@ class _ProfileContentState extends State<ProfileContent> {
           onTap: () {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Privacy Policy coming soon')),
+            );
+          },
+          showTrailing: true,
+          isDark: isDark,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSupportSection(bool isDark) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionHeader('SUPPORT & HELP', isDark),
+        const SizedBox(height: 16),
+        _buildSettingsItem(
+          icon: Icons.error_outline_rounded,
+          title: 'Register Complaint',
+          subtitle: 'Report issues or suggest improvements',
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const RegisterComplaintScreen(),
+              ),
+            );
+          },
+          showTrailing: true,
+          isDark: isDark,
+        ),
+        _buildDivider(isDark),
+        _buildSettingsItem(
+          icon: Icons.help_outline_rounded,
+          title: 'Help Center',
+          onTap: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Help Center coming soon')),
             );
           },
           showTrailing: true,
