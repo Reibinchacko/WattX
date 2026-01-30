@@ -52,6 +52,7 @@ class _RegisterComplaintScreenState extends State<RegisterComplaintScreen> {
 
       try {
         final complaint = ComplaintModel(
+          consumerUid: user.uid,
           title: _titleController.text.trim(),
           description: _descriptionController.text.trim(),
           category: _selectedCategory,
@@ -59,7 +60,7 @@ class _RegisterComplaintScreenState extends State<RegisterComplaintScreen> {
           lastUpdated: DateTime.now(),
         );
 
-        await _databaseService.submitComplaint(user.uid, complaint);
+        await _databaseService.submitComplaint(complaint);
 
         if (mounted) {
           Navigator.pop(context); // Pop loading

@@ -34,9 +34,47 @@
         },
         "OfficerAssignments": {
             "$officerUid": {
-                ".read": "auth != null && auth.uid == $officerUid",
-                ".write": "false"
+                ".read": "auth != null && (auth.uid == $officerUid || root.child('Users').child(auth.uid).child('role').val() == 'admin')",
+                ".write": "auth != null && root.child('Users').child(auth.uid).child('role').val() == 'admin'"
             }
+        },
+        "Complaints": {
+            ".read": "auth != null && (root.child('Users').child(auth.uid).child('role').val() == 'admin' || root.child('Users').child(auth.uid).child('role').val() == 'officer')",
+            ".write": "auth != null",
+            ".indexOn": [
+                "consumerUid",
+                "assignedOfficerUid"
+            ],
+            "$complaintId": {
+                ".read": "auth != null && (data.child('consumerUid').val() == auth.uid || root.child('Users').child(auth.uid).child('role').val() == 'admin' || root.child('Users').child(auth.uid).child('role').val() == 'officer')",
+                ".write": "auth != null && (!data.exists() || data.child('consumerUid').val() == auth.uid || root.child('Users').child(auth.uid).child('role').val() == 'admin' || root.child('Users').child(auth.uid).child('role').val() == 'officer')"
+            }
+        },
+        "Bills": {
+            "$uid": {
+                ".read": "auth != null && (auth.uid == $uid || root.child('Users').child(auth.uid).child('role').val() == 'admin')",
+                ".write": "auth != null && root.child('Users').child(auth.uid).child('role').val() == 'admin'"
+            }
+        },
+        "Payments": {
+            "$uid": {
+                ".read": "auth != null && (auth.uid == $uid || root.child('Users').child(auth.uid).child('role').val() == 'admin')",
+                ".write": "auth != null && auth.uid == $uid"
+            }
+        },
+        "Tariffs": {
+            ".read": "auth != null",
+            ".write": "auth != null && root.child('Users').child(auth.uid).child('role').val() == 'admin'"
+        },
+        "ServiceRequests": {
+            "$uid": {
+                ".read": "auth != null && (auth.uid == $uid || root.child('Users').child(auth.uid).child('role').val() == 'admin')",
+                ".write": "auth != null && auth.uid == $uid"
+            }
+        },
+        "SystemNotices": {
+            ".read": "auth != null",
+            ".write": "auth != null && root.child('Users').child(auth.uid).child('role').val() == 'admin'"
         }
     }
 }

@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'theme/app_theme.dart';
+import 'services/database_service.dart';
+import 'models/bill_model.dart';
 
 class KsebConsumerDetailsScreen extends StatelessWidget {
   final Map<String, dynamic> consumer;
+  final DatabaseService _dbService = DatabaseService();
 
-  const KsebConsumerDetailsScreen({super.key, required this.consumer});
+  KsebConsumerDetailsScreen({super.key, required this.consumer});
 
   @override
   Widget build(BuildContext context) {
@@ -441,22 +444,42 @@ class KsebConsumerDetailsScreen extends StatelessWidget {
                     fontSize: 24, fontWeight: FontWeight.w800)),
             const SizedBox(height: 24),
             Expanded(
-              child: ListView.separated(
-                itemCount: 5,
-                separatorBuilder: (_, __) => const Divider(),
-                itemBuilder: (context, index) => ListTile(
-                  title: Text('Bill for ${[
-                    'Jan',
-                    'Dec',
-                    'Nov',
-                    'Oct',
-                    'Sep'
-                  ][index]} 2025'),
-                  subtitle: Text('Due: ₹ ${1200 + (index * 50)}'),
-                  trailing: const Text('PAID',
-                      style: TextStyle(
-                          color: Colors.green, fontWeight: FontWeight.bold)),
-                ),
+              child: StreamBuilder<List<BillModel>>(
+                stream: _dbService.getBills(consumer['uid'] ?? ''),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  if (snapshot.hasError) {
+                    return Center(child: Text('Error: ${snapshot.error}'));
+                  }
+                  final bills = snapshot.data ?? [];
+                  if (bills.isEmpty) {
+                    return const Center(
+                        child: Text('No billing history found.'));
+                  }
+                  return ListView.separated(
+                    itemCount: bills.length,
+                    separatorBuilder: (_, __) => const Divider(),
+                    itemBuilder: (context, index) {
+                      final bill = bills[index];
+                      return ListTile(
+                        title: Text('Bill for ${bill.billingMonth}'),
+                        subtitle:
+                            Text('Amount: ₹${bill.amount.toStringAsFixed(2)}'),
+                        trailing: Text(
+                          bill.status.toUpperCase(),
+                          style: TextStyle(
+                            color: bill.status == 'paid'
+                                ? Colors.green
+                                : Colors.red,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                },
               ),
             ),
           ],

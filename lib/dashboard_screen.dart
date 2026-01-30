@@ -341,7 +341,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                '${reading?.power.toStringAsFixed(2) ?? '0.00'}',
+                reading?.power.toStringAsFixed(2) ?? '0.00',
                 style: GoogleFonts.inter(
                   fontSize: 48,
                   fontWeight: FontWeight.w900,
@@ -402,12 +402,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
       children: [
         _buildMetricCard(
             'Voltage',
-            '${reading?.voltage.toStringAsFixed(1) ?? '0.0'}',
+            reading?.voltage.toStringAsFixed(1) ?? '0.0',
             'V',
             Icons.bolt_rounded),
         _buildMetricCard(
             'Current',
-            '${reading?.current.toStringAsFixed(2) ?? '0.00'}',
+            reading?.current.toStringAsFixed(2) ?? '0.00',
             'A',
             Icons.electric_meter_rounded),
         _buildMetricCard('Frequency', '50.1', 'Hz', Icons.waves_rounded),

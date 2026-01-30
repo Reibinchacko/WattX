@@ -1,25 +1,33 @@
 {
     "Users": {
-        "SAMPLE_USER_UID": {
+        "ADMIN_UID_1": {
+            "name": "System Administrator",
+            "email": "admin@wattx.com",
+            "role": "admin",
+            "isActive": true,
+            "createdAt": 1704067200000
+        },
+        "OFFICER_UID_1": {
+            "name": "Officer Smith",
+            "email": "smith.kseb@example.com",
+            "role": "officer",
+            "isActive": true,
+            "createdAt": 1704067200000
+        },
+        "USER_UID_1": {
             "name": "John Doe",
             "email": "john.doe@example.com",
             "role": "user",
             "isActive": true,
             "budgetLimit": 150.0,
             "currency": "₹",
-            "createdAt": 1704067200000
-        },
-        "SAMPLE_OFFICER_UID": {
-            "name": "Officer Smith",
-            "email": "smith.kseb@example.com",
-            "role": "officer",
-            "isActive": true,
-            "createdAt": 1704067200000
+            "createdAt": 1704067200000,
+            "profileImageUrl": "https://api.dicebear.com/7.x/avataaars/png?seed=John%20Doe"
         }
     },
     "Devices": {
         "METER001": {
-            "ownerUid": "SAMPLE_USER_UID",
+            "ownerUid": "USER_UID_1",
             "address": "123 Smart St, Energy City",
             "status": "Online",
             "firmwareVersion": "v1.0.0",
@@ -34,34 +42,65 @@
                 "current": 5.2,
                 "timestamp": 1705214400000
             }
+        },
+        "historical": {
+            "METER001": {
+                "daily": {
+                    "2026-01-20": {
+                        "power": 15.5,
+                        "timestamp": 1705708800000
+                    },
+                    "2026-01-21": {
+                        "power": 12.3,
+                        "timestamp": 1705795200000
+                    }
+                }
+            }
+        }
+    },
+    "Complaints": {
+        "COMPLAINT_001": {
+            "consumerUid": "USER_UID_1",
+            "title": "High Bill Discrepancy",
+            "description": "My bill for January seems much higher than my actual usage.",
+            "category": "Billing",
+            "status": "Open",
+            "timestamp": 1705400000000,
+            "lastUpdated": 1705400000000
+        },
+        "COMPLAINT_002": {
+            "consumerUid": "USER_UID_1",
+            "title": "Meter Screen Not Working",
+            "description": "The LCD screen on my physical meter is blank.",
+            "category": "Meter Issue",
+            "status": "In Progress",
+            "assignedOfficerUid": "OFFICER_UID_1",
+            "timestamp": 1705500000000,
+            "lastUpdated": 1705600000000
+        }
+    },
+    "OfficerAssignments": {
+        "OFFICER_UID_1": {
+            "USER_UID_1": true
         }
     },
     "Alerts": {
-        "SAMPLE_USER_UID": {
-            "welcome_alert": {
+        "USER_UID_1": {
+            "alert_1": {
                 "title": "Welcome to WattX",
-                "message": "Your smart meter is now active and monitoring.",
+                "message": "Your smart meter is now active.",
                 "type": "info",
                 "timestamp": 1705214400000,
                 "isRead": false
             }
         }
     },
-    "OfficerAssignments": {
-        "SAMPLE_OFFICER_UID": {
-            "SAMPLE_USER_UID": true
-        }
-    },
-    "Complaints": {
-        "SAMPLE_USER_UID": {
-            "sample_complaint_id": {
-                "title": "High Bill Discrepancy",
-                "description": "My bill for January seems much higher than my actual usage. Please verify the reading.",
-                "category": "Billing",
-                "status": "Open",
-                "timestamp": 1705400000000,
-                "lastUpdated": 1705400000000
-            }
+    "Tariffs": {
+        "slab_1": {
+            "slabName": "Residential 0-100",
+            "ratePerUnit": 4.5,
+            "fixedCharge": 50.0,
+            "description": "Basic residential tariff for low consumption."
         }
     }
 }

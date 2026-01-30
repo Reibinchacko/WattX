@@ -6,6 +6,7 @@ import 'assign_officer_screen.dart';
 import 'energy_report_screen.dart';
 import 'profile_screen.dart';
 import 'notifications_screen.dart';
+import 'complaints_management_screen.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -144,6 +145,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       case 3:
         return const AssignOfficerContent();
       case 4:
+        return const ComplaintsManagementScreen(isAdmin: true);
+      case 5:
         return const ProfileContent();
       default:
         return Center(
@@ -357,7 +360,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: iconBgColor ?? Colors.black.withOpacity(0.04),
+                          color: iconBgColor ??
+                              Colors.black.withValues(alpha: 0.04),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Icon(icon,
@@ -628,7 +632,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               Icons.people_alt_rounded, 'Users', _selectedIndex == 2, 2),
           _buildNavItem(Icons.tune_rounded, 'Control', _selectedIndex == 3, 3),
           _buildNavItem(
-              Icons.person_outline_rounded, 'Profile', _selectedIndex == 4, 4),
+              Icons.assignment_outlined, 'Complaints', _selectedIndex == 4, 4),
+          _buildNavItem(
+              Icons.person_outline_rounded, 'Profile', _selectedIndex == 5, 5),
         ],
       ),
     );

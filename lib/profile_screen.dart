@@ -496,9 +496,11 @@ class _ProfileContentState extends State<ProfileContent> {
           ),
           TextButton(
             onPressed: () async {
+              final messenger = ScaffoldMessenger.of(context);
+              final navigator = Navigator.of(context);
               final newName = nameController.text.trim();
               if (newName.isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
+                messenger.showSnackBar(
                   const SnackBar(content: Text('Name cannot be empty')),
                 );
                 return;
@@ -526,19 +528,17 @@ class _ProfileContentState extends State<ProfileContent> {
                 }
 
                 await FirebaseAuth.instance.currentUser?.reload();
-                if (mounted) {
-                  setState(() {});
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Name updated successfully')),
-                  );
-                }
+                if (!mounted) return;
+                setState(() {});
+                navigator.pop();
+                messenger.showSnackBar(
+                  const SnackBar(content: Text('Name updated successfully')),
+                );
               } catch (e) {
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error: ${e.toString()}')),
-                  );
-                }
+                if (!mounted) return;
+                messenger.showSnackBar(
+                  SnackBar(content: Text('Error: ${e.toString()}')),
+                );
               }
             },
             child: Text(
@@ -606,11 +606,13 @@ class _ProfileContentState extends State<ProfileContent> {
           ),
           TextButton(
             onPressed: () async {
+              final messenger = ScaffoldMessenger.of(context);
+              final navigator = Navigator.of(context);
               final newEmail = emailController.text.trim();
               final password = passwordController.text;
 
               if (newEmail.isEmpty || password.isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
+                messenger.showSnackBar(
                   const SnackBar(content: Text('All fields are required')),
                 );
                 return;
@@ -630,15 +632,13 @@ class _ProfileContentState extends State<ProfileContent> {
                 await user.verifyBeforeUpdateEmail(newEmail);
                 await user.reload();
 
-                if (mounted) {
-                  setState(() {});
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                        content:
-                            Text('Verification email sent to new address')),
-                  );
-                }
+                if (!mounted) return;
+                setState(() {});
+                navigator.pop();
+                messenger.showSnackBar(
+                  const SnackBar(
+                      content: Text('Verification email sent to new address')),
+                );
               } on FirebaseAuthException catch (e) {
                 String message = 'Error updating email';
                 if (e.code == 'wrong-password') {
@@ -648,11 +648,10 @@ class _ProfileContentState extends State<ProfileContent> {
                 } else if (e.code == 'invalid-email') {
                   message = 'Invalid email format';
                 }
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(message)),
-                  );
-                }
+                if (!mounted) return;
+                messenger.showSnackBar(
+                  SnackBar(content: Text(message)),
+                );
               }
             },
             child: Text(
@@ -728,6 +727,8 @@ class _ProfileContentState extends State<ProfileContent> {
           ),
           TextButton(
             onPressed: () async {
+              final messenger = ScaffoldMessenger.of(context);
+              final navigator = Navigator.of(context);
               final currentPassword = currentPasswordController.text;
               final newPassword = newPasswordController.text;
               final confirmPassword = confirmPasswordController.text;
@@ -735,14 +736,14 @@ class _ProfileContentState extends State<ProfileContent> {
               if (currentPassword.isEmpty ||
                   newPassword.isEmpty ||
                   confirmPassword.isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
+                messenger.showSnackBar(
                   const SnackBar(content: Text('All fields are required')),
                 );
                 return;
               }
 
               if (newPassword.length < 8) {
-                ScaffoldMessenger.of(context).showSnackBar(
+                messenger.showSnackBar(
                   const SnackBar(
                       content: Text('Password must be at least 8 characters')),
                 );
@@ -750,7 +751,7 @@ class _ProfileContentState extends State<ProfileContent> {
               }
 
               if (newPassword != confirmPassword) {
-                ScaffoldMessenger.of(context).showSnackBar(
+                messenger.showSnackBar(
                   const SnackBar(content: Text('Passwords do not match')),
                 );
                 return;
@@ -769,13 +770,12 @@ class _ProfileContentState extends State<ProfileContent> {
                 // Update password
                 await user.updatePassword(newPassword);
 
-                if (mounted) {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                        content: Text('Password updated successfully')),
-                  );
-                }
+                if (!mounted) return;
+                navigator.pop();
+                messenger.showSnackBar(
+                  const SnackBar(
+                      content: Text('Password updated successfully')),
+                );
               } on FirebaseAuthException catch (e) {
                 String message = 'Error updating password';
                 if (e.code == 'wrong-password') {
@@ -783,11 +783,10 @@ class _ProfileContentState extends State<ProfileContent> {
                 } else if (e.code == 'weak-password') {
                   message = 'Password is too weak';
                 }
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(message)),
-                  );
-                }
+                if (!mounted) return;
+                messenger.showSnackBar(
+                  SnackBar(content: Text(message)),
+                );
               }
             },
             child: Text(

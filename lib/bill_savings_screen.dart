@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'notifications_screen.dart';
 import 'theme/app_theme.dart';
+import 'services/database_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'models/bill_model.dart';
 
 class BillSavingsScreen extends StatefulWidget {
   const BillSavingsScreen({super.key});
@@ -11,26 +14,54 @@ class BillSavingsScreen extends StatefulWidget {
 }
 
 class _BillSavingsScreenState extends State<BillSavingsScreen> {
+  final DatabaseService _databaseService = DatabaseService();
+  final String _uid = FirebaseAuth.instance.currentUser?.uid ?? '';
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildHeader(),
-              const SizedBox(height: 32),
-              _buildMainBillingCard(),
-              const SizedBox(height: 32),
-              _buildBreakdownSection(),
-              const SizedBox(height: 32),
-              _buildSmartSavingsSection(),
-              const SizedBox(height: 40),
-            ],
-          ),
+        child: StreamBuilder<List<BillModel>>(
+          stream: _databaseService.getBills(_uid),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            final bills = snapshot.data ?? [];
+            var latestBill = bills.isNotEmpty
+                ? bills.reduce((a, b) =>
+                    a.id.compareTo(b.id) > 0 ? a : b) // Simple logic for latest
+                : null;
+
+            // If no bill exists, create a dummy one for display
+            latestBill ??= BillModel(
+              id: 'dummy_bill',
+              amount: 786.00,
+              dueDate: DateTime.now().add(const Duration(days: 5)),
+              billingMonth: 'January 2026',
+              unitsConsumed: 142,
+              status: 'unpaid',
+            );
+
+            return SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildHeader(),
+                  const SizedBox(height: 32),
+                  _buildMainBillingCard(latestBill),
+                  const SizedBox(height: 32),
+                  _buildBreakdownSection(latestBill),
+                  const SizedBox(height: 32),
+                  _buildSmartSavingsSection(),
+                  const SizedBox(height: 40),
+                ],
+              ),
+            );
+          },
         ),
       ),
     );
@@ -95,7 +126,10 @@ class _BillSavingsScreenState extends State<BillSavingsScreen> {
     );
   }
 
-  Widget _buildMainBillingCard() {
+  Widget _buildMainBillingCard(BillModel bill) {
+    const currency = '₹';
+    final daysToDue = bill.dueDate.difference(DateTime.now()).inDays;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(28),
@@ -117,7 +151,7 @@ class _BillSavingsScreenState extends State<BillSavingsScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'OCTOBER 2023',
+                bill.billingMonth.toUpperCase(),
                 style: GoogleFonts.inter(
                   fontSize: 11,
                   fontWeight: FontWeight.w800,
@@ -125,27 +159,45 @@ class _BillSavingsScreenState extends State<BillSavingsScreen> {
                   letterSpacing: 1.2,
                 ),
               ),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppTheme.primaryGold.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  'Due in 5 days',
-                  style: GoogleFonts.inter(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800,
-                    color: AppTheme.primaryGold,
+              if (bill.status == 'unpaid')
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryGold.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    daysToDue > 0 ? 'Due in $daysToDue days' : 'Overdue',
+                    style: GoogleFonts.inter(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      color: AppTheme.primaryGold,
+                    ),
+                  ),
+                )
+              else
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.green.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    'PAID',
+                    style: GoogleFonts.inter(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.green,
+                    ),
                   ),
                 ),
-              ),
             ],
           ),
           const SizedBox(height: 24),
           Text(
-            '₹842.50',
+            '$currency${bill.amount.toStringAsFixed(2)}',
             style: GoogleFonts.inter(
               fontSize: 40,
               fontWeight: FontWeight.w900,
@@ -160,14 +212,14 @@ class _BillSavingsScreenState extends State<BillSavingsScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'EST. TOTAL',
+                      'UNITS USED',
                       style: GoogleFonts.inter(
                           fontSize: 10,
                           color: Colors.white38,
                           fontWeight: FontWeight.w800),
                     ),
                     Text(
-                      '₹1,240',
+                      '${bill.unitsConsumed} kWh',
                       style: GoogleFonts.inter(
                           fontSize: 16,
                           color: Colors.white,
@@ -176,25 +228,27 @@ class _BillSavingsScreenState extends State<BillSavingsScreen> {
                   ],
                 ),
               ),
-              SizedBox(
-                height: 48,
-                child: ElevatedButton(
-                  onPressed: () => _showPaymentSuccessDialog(context),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primaryGold,
-                    foregroundColor: AppTheme.midnightCharcoal,
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16)),
-                  ),
-                  child: Text(
-                    'PAY NOW',
-                    style: GoogleFonts.inter(
-                        fontWeight: FontWeight.w900, fontSize: 13),
+              if (bill.status == 'unpaid')
+                SizedBox(
+                  height: 48,
+                  child: ElevatedButton(
+                    onPressed: () =>
+                        _showPaymentSuccessDialog(context, bill.amount),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primaryGold,
+                      foregroundColor: AppTheme.midnightCharcoal,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16)),
+                    ),
+                    child: Text(
+                      'PAY NOW',
+                      style: GoogleFonts.inter(
+                          fontWeight: FontWeight.w900, fontSize: 13),
+                    ),
                   ),
                 ),
-              ),
             ],
           ),
         ],
@@ -202,7 +256,7 @@ class _BillSavingsScreenState extends State<BillSavingsScreen> {
     );
   }
 
-  void _showPaymentSuccessDialog(BuildContext context) {
+  void _showPaymentSuccessDialog(BuildContext context, double amount) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -232,7 +286,7 @@ class _BillSavingsScreenState extends State<BillSavingsScreen> {
             ),
             const SizedBox(height: 12),
             Text(
-              'Your transaction of ₹842.50 has been completed successfully.',
+              'Your transaction of ₹${amount.toStringAsFixed(2)} has been completed successfully.',
               textAlign: TextAlign.center,
               style: GoogleFonts.inter(
                   fontSize: 14, color: Colors.black45, height: 1.5),
@@ -253,7 +307,12 @@ class _BillSavingsScreenState extends State<BillSavingsScreen> {
     );
   }
 
-  Widget _buildBreakdownSection() {
+  Widget _buildBreakdownSection(BillModel bill) {
+    const rate = 8.5; // Matches DatabaseService logic
+    final usageCharge = bill.unitsConsumed * rate;
+    const fixedCharge = 50.0;
+    final taxes = bill.amount - usageCharge - fixedCharge;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -276,14 +335,26 @@ class _BillSavingsScreenState extends State<BillSavingsScreen> {
           ),
           child: Column(
             children: [
-              _buildBreakdownItem('Usage Charges', '412 kWh × ₹0.14', '₹576.80',
-                  Icons.bolt_rounded, Colors.blue),
+              _buildBreakdownItem(
+                  'Usage Charges',
+                  '${bill.unitsConsumed} kWh × ₹$rate',
+                  '₹${usageCharge.toStringAsFixed(2)}',
+                  Icons.bolt_rounded,
+                  Colors.blue),
               const Divider(height: 48, color: Colors.black12),
-              _buildBreakdownItem('Service Fee', 'Fixed daily rate', '₹150.00',
-                  Icons.settings_input_component_rounded, Colors.purple),
+              _buildBreakdownItem(
+                  'Service Fee',
+                  'Fixed monthly rate',
+                  '₹${fixedCharge.toStringAsFixed(2)}',
+                  Icons.settings_input_component_rounded,
+                  Colors.purple),
               const Divider(height: 48, color: Colors.black12),
-              _buildBreakdownItem('Local Taxes', 'State & Gov Levies',
-                  '₹115.70', Icons.receipt_long_rounded, Colors.orange),
+              _buildBreakdownItem(
+                  'Local Taxes',
+                  'State & Gov Levies',
+                  '₹${taxes.toStringAsFixed(2)}',
+                  Icons.receipt_long_rounded,
+                  Colors.orange),
             ],
           ),
         ),

@@ -6,7 +6,7 @@ import 'theme/app_theme.dart';
 import 'energy_report_screen.dart';
 import 'profile_screen.dart';
 import 'kseb_consumer_list_screen.dart';
-import 'kseb_alerts_screen.dart';
+import 'complaints_management_screen.dart';
 
 class KsebOfficerDashboardScreen extends StatefulWidget {
   const KsebOfficerDashboardScreen({super.key});
@@ -35,7 +35,7 @@ class _KsebOfficerDashboardScreenState
     if (index == 0) return _buildDashboardContent();
     if (index == 1) return const KsebConsumerListScreen();
     if (index == 2) return const EnergyReportContent();
-    if (index == 3) return const KsebAlertsScreen();
+    if (index == 3) return const ComplaintsManagementScreen(isAdmin: false);
     if (index == 4) return const ProfileScreen();
     return const SizedBox();
   }
@@ -300,8 +300,9 @@ class _KsebOfficerDashboardScreenState
                           'Fri',
                           'Sat'
                         ];
-                        if (value < 0 || value >= days.length)
+                        if (value < 0 || value >= days.length) {
                           return const SizedBox();
+                        }
                         return Padding(
                           padding: const EdgeInsets.only(top: 8.0),
                           child: Text(
@@ -374,8 +375,7 @@ class _KsebOfficerDashboardScreenState
           _buildNavItem(Icons.home_rounded, 'Home', 0),
           _buildNavItem(Icons.people_alt_rounded, 'Consumers', 1),
           _buildNavItem(Icons.bar_chart_rounded, 'Reports', 2),
-          _buildNavItem(Icons.notifications_rounded, 'Alerts', 3,
-              hasBadge: true),
+          _buildNavItem(Icons.assignment_outlined, 'Complaints', 3),
           _buildNavItem(Icons.person_rounded, 'Profile', 4),
         ],
       ),

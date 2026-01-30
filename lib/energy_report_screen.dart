@@ -228,7 +228,7 @@ class _EnergyReportContentState extends State<EnergyReportContent> {
                       style: GoogleFonts.inter(
                         fontSize: 11,
                         fontWeight: FontWeight.w800,
-                        color: Color(0xFF2EBD59),
+                        color: const Color(0xFF2EBD59),
                       ),
                     ),
                   ],
@@ -241,7 +241,7 @@ class _EnergyReportContentState extends State<EnergyReportContent> {
             height: 200,
             child: LineChart(
               LineChartData(
-                gridData: FlGridData(show: false),
+                gridData: const FlGridData(show: false),
                 titlesData: FlTitlesData(
                   bottomTitles: AxisTitles(
                     sideTitles: SideTitles(
@@ -262,12 +262,12 @@ class _EnergyReportContentState extends State<EnergyReportContent> {
                       },
                     ),
                   ),
-                  leftTitles:
-                      AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  topTitles:
-                      AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  rightTitles:
-                      AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  leftTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false)),
+                  topTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false)),
+                  rightTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false)),
                 ),
                 borderData: FlBorderData(show: false),
                 lineBarsData: [
@@ -331,9 +331,9 @@ class _EnergyReportContentState extends State<EnergyReportContent> {
                   getTouchedSpotIndicator:
                       (LineChartBarData barData, List<int> spotIndexes) {
                     return spotIndexes.map((index) {
-                      return TouchedSpotIndicatorData(
+                      return const TouchedSpotIndicatorData(
                         FlLine(
-                            color: const Color(0xFFF0F210),
+                            color: Color(0xFFF0F210),
                             strokeWidth: 2,
                             dashArray: [5, 5]),
                         FlDotData(show: false),

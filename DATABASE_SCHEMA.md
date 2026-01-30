@@ -157,16 +157,38 @@ Broadcast messages from administrative officers.
 
 ---
 
-## Node: `Complaints`
-Stores user-submitted complaints and feedback.
+---
 
-**Path**: `Complaints/{uid}/{complaintId}`
+## Node: `Complaints`
+Stores user-submitted complaints and tracks their resolution flow.
+
+**Path**: `Complaints/{complaintId}` (Flattened for easier access by Officers/Admins)
 
 | Field | Type | Description |
 | :--- | :--- | :--- |
-| `title` | String | Short title of the complaint |
+| `consumerUid` | String | UID of the user who submitted the complaint |
+| `title` | String | Short title of the issue |
 | `description` | String | Detailed issue description |
-| `category` | String | e.g., `Billing`, `Power Outage`, `Meter Issue`, `Other` |
-| `status` | String | `Open`, `In Progress`, or `Resolved` |
+| `category` | String | e.g., `Billing`, `Power Outage`, `Meter Issue` |
+| `status` | String | `Open`, `In Progress`, `Resolved`, `Closed` |
+| `assignedOfficerUid`| String?| UID of the officer currently handling the complaint |
 | `timestamp` | Timestamp | Submission time |
-| `lastUpdated` | Timestamp | Last status change time |
+| `lastUpdated` | Timestamp | Last status change or comment time |
+| `response` | String? | Official response from the officer or admin |
+
+---
+
+## Node: `OfficerAssignments`
+Mapping for administrative oversight and task distribution.
+
+**Path**: `OfficerAssignments/{officerUid}/{consumerUid}`
+A boolean flag indicating that the consumer is managed by the officer.
+
+---
+
+## Data Flow: Complaints
+1. **User Role**: Creates a complaint. It is saved in the `Complaints` node with `status: "Open"`.
+2. **Admin Role**: Views all Open complaints and assigns an `assignedOfficerUid`.
+3. **Officer Role**: Views complaints where `assignedOfficerUid` matches their UID. Updates `status` to `In Progress` and eventually `Resolved`.
+4. **User Role**: Receives a notification (Alert) when the status changes.
+

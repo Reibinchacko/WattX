@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'theme/app_theme.dart';
 import 'kseb_consumer_details_screen.dart';
+import 'services/database_service.dart';
+import 'models/user_model.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class KsebConsumerListScreen extends StatefulWidget {
   const KsebConsumerListScreen({super.key});
@@ -11,60 +14,21 @@ class KsebConsumerListScreen extends StatefulWidget {
 }
 
 class _KsebConsumerListScreenState extends State<KsebConsumerListScreen> {
+  final DatabaseService _dbService = DatabaseService();
+  final String _officerUid = FirebaseAuth.instance.currentUser?.uid ?? '';
   String _selectedFilter = 'All Consumers';
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
 
-  final List<Map<String, dynamic>> _consumers = [
-    // ... same data ...
-    {
-      'name': 'Priya Nair',
-      'consumerId': '#882910',
-      'meterId': 'SM-882910',
-      'location': 'Kowdiar, TVM',
-      'status': 'ACTIVE',
-      'type': 'individual',
-      'image': 'assets/images/user1.png',
-    },
-    {
-      'name': 'Green Valley Apts',
-      'consumerId': '#882911',
-      'meterId': 'SM-882911',
-      'location': 'Pattom, TVM',
-      'status': 'PENDING',
-      'type': 'apartment',
-    },
-    {
-      'name': 'Arun Kumar',
-      'consumerId': '#883042',
-      'meterId': 'SM-883042',
-      'location': 'Vellayambalam',
-      'status': 'ACTIVE',
-      'type': 'individual',
-    },
-    {
-      'name': 'Lakshmi Towers',
-      'consumerId': '#881002',
-      'meterId': 'SM-881002',
-      'location': 'Kazhakkoottam',
-      'status': 'DISC.',
-      'type': 'business',
-    },
-  ];
-
-  List<Map<String, dynamic>> get _filteredConsumers {
-    return _consumers.where((consumer) {
+  List<UserModel> _filterConsumers(List<UserModel> consumers) {
+    return consumers.where((consumer) {
       final matchesSearch =
-          consumer['name'].toLowerCase().contains(_searchQuery.toLowerCase()) ||
-              consumer['consumerId']
-                  .toLowerCase()
-                  .contains(_searchQuery.toLowerCase()) ||
-              consumer['meterId']
-                  .toLowerCase()
-                  .contains(_searchQuery.toLowerCase());
+          consumer.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+              consumer.email.toLowerCase().contains(_searchQuery.toLowerCase());
 
       final matchesFilter = _selectedFilter == 'All Consumers' ||
-          consumer['status'].toUpperCase() == _selectedFilter.toUpperCase();
+          (consumer.isActive && _selectedFilter == 'Active') ||
+          (!consumer.isActive && _selectedFilter == 'Disc.');
 
       return matchesSearch && matchesFilter;
     }).toList();
@@ -97,7 +61,19 @@ class _KsebConsumerListScreenState extends State<KsebConsumerListScreen> {
             const SizedBox(height: 24),
             _buildFilterChips(),
             const SizedBox(height: 24),
-            _buildConsumerList(),
+            StreamBuilder<List<UserModel>>(
+              stream: _dbService.getAssignedConsumers(_officerUid),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                }
+                final filtered = _filterConsumers(snapshot.data ?? []);
+                return _buildConsumerList(filtered);
+              },
+            ),
             const SizedBox(height: 80), // Space for FAB
           ],
         ),
@@ -310,8 +286,7 @@ class _KsebConsumerListScreenState extends State<KsebConsumerListScreen> {
     );
   }
 
-  Widget _buildConsumerList() {
-    final filtered = _filteredConsumers;
+  Widget _buildConsumerList(List<UserModel> filtered) {
     if (filtered.isEmpty) {
       return Center(
         child: Padding(
@@ -340,15 +315,29 @@ class _KsebConsumerListScreenState extends State<KsebConsumerListScreen> {
     );
   }
 
-  Widget _buildConsumerCard(Map<String, dynamic> consumer) {
-    Color statusColor = _getStatusColor(consumer['status']);
+  Widget _buildConsumerCard(UserModel consumer) {
+    Color statusColor =
+        consumer.isActive ? const Color(0xFF2EBD59) : const Color(0xFFD32F2F);
 
     return GestureDetector(
       onTap: () {
+        // Since KsebConsumerDetailsScreen expects a Map<String, dynamic>
+        // and we have a UserModel, we'll convert it or update the screen.
+        // For now, let's pass a map.
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => KsebConsumerDetailsScreen(consumer: consumer),
+            builder: (context) => KsebConsumerDetailsScreen(
+              consumer: {
+                'name': consumer.name,
+                'email': consumer.email,
+                'status': consumer.isActive ? 'ACTIVE' : 'DISC.',
+                'consumerId': consumer.uid.substring(0, 6),
+                'meterId': 'SM-${consumer.uid.substring(0, 6)}',
+                'type': 'individual',
+                'uid': consumer.uid,
+              },
+            ),
           ),
         );
       },
@@ -384,7 +373,7 @@ class _KsebConsumerListScreenState extends State<KsebConsumerListScreen> {
                           children: [
                             Expanded(
                               child: Text(
-                                consumer['name'],
+                                consumer.name,
                                 style: GoogleFonts.inter(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w700,
@@ -411,7 +400,7 @@ class _KsebConsumerListScreenState extends State<KsebConsumerListScreen> {
                                   ),
                                   const SizedBox(width: 6),
                                   Text(
-                                    consumer['status'],
+                                    consumer.isActive ? 'ACTIVE' : 'DISC.',
                                     style: GoogleFonts.inter(
                                       fontSize: 10,
                                       fontWeight: FontWeight.w700,
@@ -425,7 +414,7 @@ class _KsebConsumerListScreenState extends State<KsebConsumerListScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Consumer ${consumer["consumerId"]}',
+                          consumer.email,
                           style: GoogleFonts.inter(
                             fontSize: 13,
                             color: const Color(0xFF637381),
@@ -437,78 +426,13 @@ class _KsebConsumerListScreenState extends State<KsebConsumerListScreen> {
                 ],
               ),
             ),
-            Divider(height: 1, color: Colors.grey.withValues(alpha: 0.1)),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'METER ID',
-                          style: GoogleFonts.inter(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            color: const Color(0xFF919EAB),
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            const Icon(Icons.bolt,
-                                size: 16, color: AppTheme.primaryGold),
-                            const SizedBox(width: 4),
-                            Text(
-                              consumer['meterId'],
-                              style: GoogleFonts.inter(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: AppTheme.midnightCharcoal,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  Icon(Icons.chevron_right,
-                      color: Colors.grey.withValues(alpha: 0.5)),
-                ],
-              ),
-            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildAvatar(Map<String, dynamic> consumer) {
-    if (consumer['type'] == 'apartment') {
-      return Container(
-        width: 48,
-        height: 48,
-        decoration: const BoxDecoration(
-          color: Color(0xFFE0F2F1), // Light teal
-          shape: BoxShape.circle,
-        ),
-        child: const Icon(Icons.apartment_rounded,
-            color: Color(0xFF00695C), size: 24),
-      );
-    } else if (consumer['type'] == 'business') {
-      return Container(
-        width: 48,
-        height: 48,
-        decoration: BoxDecoration(
-          color: Colors.grey[200],
-          shape: BoxShape.circle,
-        ),
-        child: const Icon(Icons.business_rounded, color: Colors.grey, size: 24),
-      );
-    }
-
-    // Default individual
+  Widget _buildAvatar(UserModel consumer) {
     return Container(
       width: 48,
       height: 48,
@@ -518,7 +442,7 @@ class _KsebConsumerListScreenState extends State<KsebConsumerListScreen> {
       ),
       child: Center(
         child: Text(
-          consumer['name'][0],
+          consumer.name[0],
           style: GoogleFonts.inter(
             fontSize: 20,
             fontWeight: FontWeight.w700,
