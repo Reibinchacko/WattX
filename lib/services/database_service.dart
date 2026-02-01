@@ -306,7 +306,7 @@ class DatabaseService {
 
       // 2. Device Registration
       await _db.ref('Devices/$meterId').set({
-        'uid': uid,
+        'ownerUid': uid,
         'address': '123 Maple Avenue, Apt 4B',
         'firmwareVersion': 'v2.1',
         'status': 'Online',

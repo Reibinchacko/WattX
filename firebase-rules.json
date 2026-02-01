@@ -53,7 +53,7 @@
         "Bills": {
             "$uid": {
                 ".read": "auth != null && (auth.uid == $uid || root.child('Users').child(auth.uid).child('role').val() == 'admin')",
-                ".write": "auth != null && root.child('Users').child(auth.uid).child('role').val() == 'admin'"
+                ".write": "auth != null && (auth.uid == $uid || root.child('Users').child(auth.uid).child('role').val() == 'admin')"
             }
         },
         "Payments": {
