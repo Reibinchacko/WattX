@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'theme/app_theme.dart';
+import 'services/database_service.dart';
 import 'user_management_screen.dart';
 import 'assign_officer_screen.dart';
 import 'energy_report_screen.dart';
@@ -17,6 +18,7 @@ class AdminDashboardScreen extends StatefulWidget {
 
 class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   int _selectedIndex = 0;
+  final DatabaseService _dbService = DatabaseService();
 
   @override
   Widget build(BuildContext context) {
@@ -129,7 +131,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               const SizedBox(height: 24),
               _buildSystemHealthCard(),
               const SizedBox(height: 24),
-              _buildStatsGrid(),
+              _buildRealTimeStats(),
               const SizedBox(height: 24),
               _buildEnergyConsumptionCard(),
               const SizedBox(height: 24),
@@ -280,7 +282,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
-  Widget _buildStatsGrid() {
+  Widget _buildRealTimeStats() {
     return GridView.count(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -289,28 +291,37 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       mainAxisSpacing: 16,
       childAspectRatio: 1.15,
       children: [
-        _buildStatCard(
-          '2,543',
-          'Registered Users',
-          Icons.people_outline,
-          null,
-          silhouetteIcon: Icons.people_outline,
+        StreamBuilder<int>(
+          stream: _dbService.getAllUsersStream().map((u) => u.length),
+          builder: (context, snapshot) => _buildStatCard(
+            snapshot.data?.toString() ?? '...',
+            'Registered Users',
+            Icons.people_outline,
+            null,
+            silhouetteIcon: Icons.people_outline,
+          ),
         ),
-        _buildStatCard(
-          '1,890',
-          'Active Meters',
-          Icons.bolt_outlined,
-          '+12%',
-          silhouetteIcon: Icons.bolt_outlined,
+        StreamBuilder<int>(
+          stream: _dbService.getAllDevicesCountStream(),
+          builder: (context, snapshot) => _buildStatCard(
+            snapshot.data?.toString() ?? '...',
+            'Active Meters',
+            Icons.bolt_outlined,
+            null,
+            silhouetteIcon: Icons.bolt_outlined,
+          ),
         ),
-        _buildStatCard(
-          '14',
-          'Active Alerts',
-          Icons.warning_amber_rounded,
-          null,
-          iconColor: const Color(0xFFFF8A00),
-          iconBgColor: const Color(0xFFFFF4E9),
-          silhouetteIcon: Icons.priority_high_rounded,
+        StreamBuilder<int>(
+          stream: _dbService.getAllAlertsCountStream(),
+          builder: (context, snapshot) => _buildStatCard(
+            snapshot.data?.toString() ?? '...',
+            'Active Alerts',
+            Icons.warning_amber_rounded,
+            null,
+            iconColor: const Color(0xFFFF8A00),
+            iconBgColor: const Color(0xFFFFF4E9),
+            silhouetteIcon: Icons.priority_high_rounded,
+          ),
         ),
         _buildStatCard(
           '54ms',
@@ -462,30 +473,36 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             ],
           ),
           const SizedBox(height: 24),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                '482.5',
-                style: GoogleFonts.inter(
-                  fontSize: 32,
-                  fontWeight: FontWeight.w900,
-                  color: AppTheme.midnightCharcoal,
-                ),
-              ),
-              const SizedBox(width: 6),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 6),
-                child: Text(
-                  'MWh',
-                  style: GoogleFonts.inter(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.black26,
+          StreamBuilder<double>(
+            stream: _dbService.getSystemLivePowerStream(),
+            builder: (context, snapshot) {
+              final power = snapshot.data ?? 0.0;
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    power.toStringAsFixed(1),
+                    style: GoogleFonts.inter(
+                      fontSize: 32,
+                      fontWeight: FontWeight.w900,
+                      color: AppTheme.midnightCharcoal,
+                    ),
                   ),
-                ),
-              ),
-            ],
+                  const SizedBox(width: 6),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 6),
+                    child: Text(
+                      'kWh',
+                      style: GoogleFonts.inter(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.black26,
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
           ),
           const SizedBox(height: 24),
           _buildMiniBarChart(),

@@ -2,9 +2,6 @@ name: energy_monitor
 description: A beautiful energy monitor login screen.
 publish_to: 'none'
 version: 1.0.0+1
-firebase_core: ^3.0.0
-cloud_firestore: ^5.0.0
-
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -12,18 +9,18 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  google_fonts: ^6.1.0
-  google_sign_in: ^6.2.1
-  firebase_core: ^2.27.0
-  firebase_auth: ^4.17.0
-  firebase_database: ^10.4.0
-  cloud_firestore: ^4.14.0
+  google_fonts: ^6.3.3
+  google_sign_in: ^6.3.0
+  firebase_core: ^3.0.0
+  firebase_auth: ^5.0.0
+  firebase_database: ^11.0.0
+  cloud_firestore: ^5.0.0
   fl_chart: ^0.70.2
-  provider: ^6.1.1
-  shared_preferences: ^2.2.2
+  provider: ^6.1.5
+  shared_preferences: ^2.5.4
   intl: ^0.19.0
-
-
+  razorpay_flutter: ^1.4.0
+  fluttertoast: ^8.2.10
 
 dev_dependencies:
   flutter_test:

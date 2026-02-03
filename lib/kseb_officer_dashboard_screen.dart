@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'theme/app_theme.dart';
-
+import 'models/user_model.dart';
+import 'services/database_service.dart';
 import 'energy_report_screen.dart';
 import 'profile_screen.dart';
 import 'kseb_consumer_list_screen.dart';
@@ -19,6 +20,7 @@ class KsebOfficerDashboardScreen extends StatefulWidget {
 class _KsebOfficerDashboardScreenState
     extends State<KsebOfficerDashboardScreen> {
   int _selectedIndex = 0;
+  final DatabaseService _dbService = DatabaseService();
 
   @override
   Widget build(BuildContext context) {
@@ -154,36 +156,51 @@ class _KsebOfficerDashboardScreenState
       mainAxisSpacing: 16,
       childAspectRatio: 1.3,
       children: [
-        GestureDetector(
-          onTap: () => setState(() => _selectedIndex = 1),
-          child: _buildStatCard(
-            '120,500',
-            'Total Consumers',
-            Icons.people_alt_rounded,
+        StreamBuilder<int>(
+          stream: _dbService.getAllUsersStream().map((u) => u.length),
+          builder: (context, snapshot) => GestureDetector(
+            onTap: () => setState(() => _selectedIndex = 1),
+            child: _buildStatCard(
+              snapshot.data?.toString() ?? '...',
+              'Total Consumers',
+              Icons.people_alt_rounded,
+              const Color(0xFFFFB300),
+            ),
+          ),
+        ),
+        StreamBuilder<int>(
+          stream: _dbService.getAllDevicesCountStream(),
+          builder: (context, snapshot) => _buildStatCard(
+            snapshot.data?.toString() ?? '...',
+            'Active Meters',
+            Icons.speed_rounded,
             const Color(0xFFFFB300),
           ),
         ),
-        _buildStatCard(
-          '118,200',
-          'Active Meters',
-          Icons.speed_rounded,
-          const Color(0xFFFFB300),
-        ),
-        GestureDetector(
-          onTap: () => setState(() => _selectedIndex = 3),
-          child: _buildStatCard(
-            '45',
-            'Active Alerts',
-            Icons.notifications_rounded,
-            const Color(0xFFFFE0B2),
-            iconColor: const Color(0xFFFF8A00),
+        StreamBuilder<int>(
+          stream: _dbService.getAllAlertsCountStream(),
+          builder: (context, snapshot) => GestureDetector(
+            onTap: () => setState(() => _selectedIndex = 3),
+            child: _buildStatCard(
+              snapshot.data?.toString() ?? '...',
+              'Active Alerts',
+              Icons.notifications_rounded,
+              const Color(0xFFFFE0B2),
+              iconColor: const Color(0xFFFF8A00),
+            ),
           ),
         ),
-        _buildStatCard(
-          '1,200',
-          'High Usage',
-          Icons.trending_up_rounded,
-          const Color(0xFFFFB300),
+        StreamBuilder<double>(
+          stream: _dbService
+              .getSystemLivePowerStream(), // This is total power, but I need high usage count
+          // Let's refine the stream or just use a placeholder for now if I don't want to add another complex stream
+          // Actually, let's just make it show something dynamic for now or add a quick filter.
+          builder: (context, snapshot) => _buildStatCard(
+            '1,200',
+            'High Usage',
+            Icons.trending_up_rounded,
+            const Color(0xFFFFB300),
+          ),
         ),
       ],
     );

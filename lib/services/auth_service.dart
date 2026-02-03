@@ -41,6 +41,7 @@ class AuthService {
     required String email,
     required String password,
     required String name,
+    String role = 'user',
   }) async {
     try {
       // Create user in Firebase Auth
@@ -50,11 +51,12 @@ class AuthService {
         password: password,
       );
 
-      // Seed initial data to Realtime Database (Users, Devices, Readings, etc.)
+      // Seed initial data to Realtime Database
       await _databaseService.seedInitialData(
         userCredential.user!.uid,
         email,
         name,
+        role: role,
       );
 
       return userCredential;

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'services/database_service.dart';
 import 'models/complaint_model.dart';
+import 'models/user_model.dart';
 import 'theme/app_theme.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -61,7 +62,7 @@ class _ComplaintsManagementScreenState
               onSelected: (val) => setState(() => _selectedFilter = filter),
               selectedColor: AppTheme.primaryGold,
               labelStyle: GoogleFonts.outfit(
-                color: isSelected ? Colors.white : AppTheme.midnightCharcoal,
+                color: AppTheme.midnightCharcoal,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
               ),
             ),
@@ -129,6 +130,9 @@ class _ComplaintsManagementScreenState
       elevation: 2,
       child: ExpansionTile(
         key: PageStorageKey(complaint.id),
+        textColor: AppTheme.midnightCharcoal,
+        iconColor: AppTheme.midnightCharcoal,
+        collapsedIconColor: AppTheme.midnightCharcoal,
         leading: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
@@ -139,11 +143,17 @@ class _ComplaintsManagementScreenState
         ),
         title: Text(
           complaint.title,
-          style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
+          style: GoogleFonts.outfit(
+            fontWeight: FontWeight.bold,
+            color: AppTheme.midnightCharcoal,
+          ),
         ),
         subtitle: Text(
           'Consumer UID: ${complaint.consumerUid.substring(0, 8)}...',
-          style: GoogleFonts.outfit(fontSize: 12),
+          style: GoogleFonts.outfit(
+            fontSize: 12,
+            color: AppTheme.midnightCharcoal.withValues(alpha: 0.6),
+          ),
         ),
         trailing: Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -168,22 +178,31 @@ class _ComplaintsManagementScreenState
               children: [
                 Text(
                   'Description:',
-                  style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
+                  style: GoogleFonts.outfit(
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.midnightCharcoal,
+                  ),
                 ),
                 Text(
                   complaint.description,
-                  style: GoogleFonts.outfit(),
+                  style: GoogleFonts.outfit(
+                    color: AppTheme.midnightCharcoal.withValues(alpha: 0.8),
+                  ),
                 ),
                 const SizedBox(height: 16),
                 if (complaint.response != null) ...[
                   Text(
                     'Officer Response:',
                     style: GoogleFonts.outfit(
-                        fontWeight: FontWeight.bold, color: Colors.green),
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.successGreen,
+                    ),
                   ),
                   Text(
                     complaint.response!,
-                    style: GoogleFonts.outfit(),
+                    style: GoogleFonts.outfit(
+                      color: AppTheme.midnightCharcoal.withValues(alpha: 0.8),
+                    ),
                   ),
                   const SizedBox(height: 16),
                 ],
@@ -205,6 +224,8 @@ class _ComplaintsManagementScreenState
               onPressed: () => _showUpdateStatusDialog(complaint),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.primaryGold,
+                foregroundColor: AppTheme.midnightCharcoal,
+                elevation: 0,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12)),
               ),
@@ -220,6 +241,9 @@ class _ComplaintsManagementScreenState
             child: OutlinedButton(
               onPressed: () => _showAssignOfficerDialog(complaint),
               style: OutlinedButton.styleFrom(
+                foregroundColor: AppTheme.midnightCharcoal,
+                side: const BorderSide(color: AppTheme.midnightCharcoal),
+                backgroundColor: AppTheme.primaryGold.withValues(alpha: 0.05),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12)),
               ),
@@ -235,88 +259,317 @@ class _ComplaintsManagementScreenState
   }
 
   void _showUpdateStatusDialog(ComplaintModel complaint) {
-    final responseController = TextEditingController();
-    String selectedStatus =
-        complaint.status == 'Open' ? 'In Progress' : 'Resolved';
+    final responseController = TextEditingController(text: complaint.response);
+    String selectedStatus = complaint.status;
 
-    showDialog(
+    showModalBottomSheet(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Update Complaint', style: GoogleFonts.outfit()),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            DropdownButtonFormField<String>(
-              initialValue: selectedStatus,
-              items: ['In Progress', 'Resolved']
-                  .map((s) => DropdownMenuItem(value: s, child: Text(s)))
-                  .toList(),
-              onChanged: (val) => selectedStatus = val ?? selectedStatus,
-              decoration: const InputDecoration(labelText: 'Status'),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: responseController,
-              decoration: const InputDecoration(
-                labelText: 'Response/Comments',
-                border: OutlineInputBorder(),
-              ),
-              maxLines: 3,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel')),
-          ElevatedButton(
-            onPressed: () async {
-              final navigator = Navigator.of(context);
-              await _dbService.updateComplaintStatus(
-                complaint.id!,
-                selectedStatus,
-                response: responseController.text.trim(),
-              );
-              if (!mounted) return;
-              navigator.pop();
-            },
-            child: const Text('Save'),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) => Container(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
           ),
-        ],
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+          ),
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(32.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    'Update Status',
+                    style: GoogleFonts.outfit(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.midnightCharcoal,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      _buildStatusOption(
+                        'In Progress',
+                        Icons.sync_rounded,
+                        Colors.orange,
+                        selectedStatus == 'In Progress',
+                        () =>
+                            setModalState(() => selectedStatus = 'In Progress'),
+                      ),
+                      const SizedBox(width: 12),
+                      _buildStatusOption(
+                        'Resolved',
+                        Icons.check_circle_rounded,
+                        Colors.green,
+                        selectedStatus == 'Resolved',
+                        () => setModalState(() => selectedStatus = 'Resolved'),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 32),
+                  Text(
+                    'Officer Response',
+                    style: GoogleFonts.outfit(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.midnightCharcoal,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: responseController,
+                    maxLines: 4,
+                    decoration: InputDecoration(
+                      hintText: 'Enter your response here...',
+                      fillColor: const Color(0xFFF9F9F8),
+                      filled: true,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                    style: GoogleFonts.outfit(),
+                  ),
+                  const SizedBox(height: 32),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        final navigator = Navigator.of(context);
+                        await _dbService.updateComplaintStatus(
+                          complaint.id!,
+                          selectedStatus,
+                          response: responseController.text.trim(),
+                        );
+                        if (!mounted) return;
+                        navigator.pop();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryGold,
+                        foregroundColor: AppTheme.midnightCharcoal,
+                        padding: const EdgeInsets.symmetric(vertical: 20),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: Text(
+                        'Update Complaint',
+                        style: GoogleFonts.outfit(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatusOption(
+    String label,
+    IconData icon,
+    Color color,
+    bool isSelected,
+    VoidCallback onTap,
+  ) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 20),
+          decoration: BoxDecoration(
+            color: isSelected ? color.withValues(alpha: 0.1) : Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: isSelected ? color : Colors.black.withValues(alpha: 0.05),
+              width: 2,
+            ),
+          ),
+          child: Column(
+            children: [
+              Icon(icon, color: isSelected ? color : Colors.black26),
+              const SizedBox(height: 8),
+              Text(
+                label,
+                style: GoogleFonts.outfit(
+                  fontSize: 14,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                  color: isSelected ? color : Colors.black26,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
 
   void _showAssignOfficerDialog(ComplaintModel complaint) {
-    // In a real app, this would fetch a list of officers
-    // For this demonstration, we'll use a hardcoded UID or a simple input
-    final uidController = TextEditingController(text: 'OFFICER_UID_1');
-
-    showDialog(
+    showModalBottomSheet(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Assign to Officer', style: GoogleFonts.outfit()),
-        content: TextField(
-          controller: uidController,
-          decoration: const InputDecoration(labelText: 'Officer UID'),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.7,
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
         ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel')),
-          ElevatedButton(
-            onPressed: () async {
-              final navigator = Navigator.of(context);
-              await _dbService.updateComplaintAssignment(
-                complaint.id!,
-                uidController.text.trim(),
-              );
-              if (!mounted) return;
-              navigator.pop();
-            },
-            child: const Text('Assign'),
-          ),
-        ],
+        child: Column(
+          children: [
+            const SizedBox(height: 12),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Row(
+                children: [
+                  Text(
+                    'Assign Officer',
+                    style: GoogleFonts.outfit(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.midnightCharcoal,
+                    ),
+                  ),
+                  const Spacer(),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.close_rounded),
+                    style: IconButton.styleFrom(
+                      backgroundColor: const Color(0xFFF9F9F8),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: StreamBuilder<List<UserModel>>(
+                stream: _dbService.getAllUsersStream(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+
+                  final users = snapshot.data ?? [];
+                  final officers =
+                      users.where((u) => u.role == 'officer').toList();
+
+                  if (officers.isEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.person_off_rounded,
+                              size: 48, color: Colors.grey[300]),
+                          const SizedBox(height: 16),
+                          Text(
+                            'No officers found',
+                            style: GoogleFonts.outfit(color: Colors.grey),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+
+                  return ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    itemCount: officers.length,
+                    itemBuilder: (context, index) {
+                      final officer = officers[index];
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF9F9F8),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: ListTile(
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 8),
+                          leading: CircleAvatar(
+                            backgroundColor:
+                                AppTheme.primaryGold.withValues(alpha: 0.1),
+                            child: Text(
+                              officer.name.isNotEmpty
+                                  ? officer.name[0].toUpperCase()
+                                  : '?',
+                              style: GoogleFonts.outfit(
+                                color: AppTheme.midnightCharcoal,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          title: Text(
+                            officer.name,
+                            style: GoogleFonts.outfit(
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.midnightCharcoal,
+                            ),
+                          ),
+                          subtitle: Text(
+                            officer.email,
+                            style: GoogleFonts.outfit(
+                              fontSize: 12,
+                              color: Colors.black45,
+                            ),
+                          ),
+                          onTap: () async {
+                            final navigator = Navigator.of(context);
+                            await _dbService.updateComplaintAssignment(
+                              complaint.id!,
+                              officer.uid,
+                            );
+                            if (!mounted) return;
+                            navigator.pop();
+
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                    'Complaint assigned to ${officer.name}'),
+                                backgroundColor: AppTheme.successGreen,
+                                behavior: SnackBarBehavior.floating,
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12)),
+                              ),
+                            );
+                          },
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

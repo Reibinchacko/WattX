@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'theme/app_theme.dart';
+import 'services/database_service.dart';
+import 'models/user_model.dart';
 
 class UserManagementContent extends StatefulWidget {
   const UserManagementContent({super.key});
@@ -11,26 +13,62 @@ class UserManagementContent extends StatefulWidget {
 
 class _UserManagementContentState extends State<UserManagementContent> {
   final TextEditingController _searchController = TextEditingController();
+  final DatabaseService _dbService = DatabaseService();
+  String _searchQuery = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController.addListener(() {
+      setState(() {
+        _searchQuery = _searchController.text.toLowerCase();
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildSearchAndFilter(),
-              const SizedBox(height: 24),
-              _buildSectionHeader(),
-            ],
-          ),
-        ),
-        Expanded(
-          child: _buildUserList(),
-        ),
-      ],
+    return StreamBuilder<List<UserModel>>(
+      stream: _dbService.getAllUsersStream(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snapshot.hasError) {
+          return Center(child: Text('Error: ${snapshot.error}'));
+        }
+
+        final users = snapshot.data ?? [];
+        final filteredUsers = users.where((u) {
+          return u.name.toLowerCase().contains(_searchQuery) ||
+              u.email.toLowerCase().contains(_searchQuery);
+        }).toList();
+
+        return Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildSearchAndFilter(),
+                  const SizedBox(height: 24),
+                  _buildSectionHeader(filteredUsers.length),
+                ],
+              ),
+            ),
+            Expanded(
+              child: _buildUserList(filteredUsers),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -66,7 +104,7 @@ class _UserManagementContentState extends State<UserManagementContent> {
     );
   }
 
-  Widget _buildSectionHeader() {
+  Widget _buildSectionHeader(int count) {
     return Row(
       children: [
         Text(
@@ -85,7 +123,7 @@ class _UserManagementContentState extends State<UserManagementContent> {
             borderRadius: BorderRadius.circular(12),
           ),
           child: Text(
-            '128',
+            count.toString(),
             style: GoogleFonts.inter(
               fontSize: 12,
               fontWeight: FontWeight.w800,
@@ -97,40 +135,21 @@ class _UserManagementContentState extends State<UserManagementContent> {
     );
   }
 
-  Widget _buildUserList() {
-    final users = [
-      {
-        'name': 'Arun Varma',
-        'id': '#449201',
-        'status': 'Active',
-        'email': 'arun.v@gmail.com'
-      },
-      {
-        'name': 'Meera Nair',
-        'id': '#883109',
-        'status': 'Inactive',
-        'email': 'meera.n@gmail.com'
-      },
-      {
-        'name': 'Rahul Das',
-        'id': '#112004',
-        'status': 'Active',
-        'email': 'rahul.d@gmail.com'
-      },
-      {
-        'name': 'Sita Pillai',
-        'id': '#223405',
-        'status': 'Active',
-        'email': 'sita.p@gmail.com'
-      },
-    ];
-
+  Widget _buildUserList(List<UserModel> users) {
+    if (users.isEmpty) {
+      return Center(
+        child: Text(
+          'No users found',
+          style: GoogleFonts.inter(color: Colors.black26),
+        ),
+      );
+    }
     return ListView.builder(
       padding: const EdgeInsets.fromLTRB(24, 0, 24, 100),
       itemCount: users.length,
       itemBuilder: (context, index) {
         final user = users[index];
-        final isActive = user['status'] == 'Active';
+        final isActive = user.isActive;
         return Container(
           margin: const EdgeInsets.only(bottom: 16),
           padding: const EdgeInsets.all(16),
@@ -154,7 +173,7 @@ class _UserManagementContentState extends State<UserManagementContent> {
                     backgroundColor:
                         AppTheme.primaryGold.withValues(alpha: 0.1),
                     child: Text(
-                      user['name']![0],
+                      user.name[0],
                       style: GoogleFonts.inter(
                         fontSize: 16,
                         fontWeight: FontWeight.w800,
@@ -183,7 +202,7 @@ class _UserManagementContentState extends State<UserManagementContent> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      user['name']!,
+                      user.name,
                       style: GoogleFonts.inter(
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
@@ -191,7 +210,7 @@ class _UserManagementContentState extends State<UserManagementContent> {
                       ),
                     ),
                     Text(
-                      'Meter ${user['id']}',
+                      user.email,
                       style: GoogleFonts.inter(
                         fontSize: 12,
                         color: Colors.black26,

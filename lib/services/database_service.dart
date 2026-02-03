@@ -209,6 +209,59 @@ class DatabaseService {
     return [];
   }
 
+  Stream<List<UserModel>> getAllUsersStream() {
+    return _db.ref('Users').onValue.map((event) {
+      final data = event.snapshot.value as Map<dynamic, dynamic>?;
+      if (data != null) {
+        return data.entries.map((e) {
+          return UserModel.fromMap(e.key, e.value as Map<dynamic, dynamic>);
+        }).toList();
+      }
+      return [];
+    });
+  }
+
+  Stream<int> getAllDevicesCountStream() {
+    return _db.ref('Devices').onValue.map((event) {
+      final data = event.snapshot.value as Map<dynamic, dynamic>?;
+      return data?.length ?? 0;
+    });
+  }
+
+  Stream<int> getAllAlertsCountStream() {
+    return _db.ref('Alerts').onValue.map((event) {
+      final data = event.snapshot.value as Map<dynamic, dynamic>?;
+      if (data == null) return 0;
+
+      int totalUnread = 0;
+      data.forEach((uid, alertsMap) {
+        if (alertsMap is Map) {
+          alertsMap.forEach((alertId, alertData) {
+            if (alertData is Map && alertData['isRead'] == false) {
+              totalUnread++;
+            }
+          });
+        }
+      });
+      return totalUnread;
+    });
+  }
+
+  Stream<double> getSystemLivePowerStream() {
+    return _db.ref('EnergyReadings/live').onValue.map((event) {
+      final data = event.snapshot.value as Map<dynamic, dynamic>?;
+      if (data == null) return 0.0;
+
+      double totalPower = 0.0;
+      data.forEach((deviceId, reading) {
+        if (reading is Map && reading['power'] != null) {
+          totalPower += (reading['power'] as num).toDouble();
+        }
+      });
+      return totalPower;
+    });
+  }
+
   Future<void> generateMonthlyBill(
       String uid, String meterId, String month) async {
     // 1. Fetch consumption (simulation: random value between 350-550 kWh)
@@ -287,7 +340,8 @@ class DatabaseService {
 
   // --- Initial Data Seeding ---
 
-  Future<void> seedInitialData(String uid, String email, String name) async {
+  Future<void> seedInitialData(String uid, String email, String name,
+      {String role = 'user'}) async {
     const String meterId = 'METER001';
 
     try {
@@ -295,7 +349,7 @@ class DatabaseService {
       await _db.ref('Users/$uid').set({
         'name': name,
         'email': email,
-        'role': 'user',
+        'role': role,
         'createdAt': ServerValue.timestamp,
         'isActive': true,
         'currency': '₹',
@@ -304,37 +358,41 @@ class DatabaseService {
             'https://api.dicebear.com/7.x/avataaars/png?seed=${Uri.encodeComponent(name)}',
       });
 
-      // 2. Device Registration
-      await _db.ref('Devices/$meterId').set({
-        'ownerUid': uid,
-        'address': '123 Maple Avenue, Apt 4B',
-        'firmwareVersion': 'v2.1',
-        'status': 'Online',
-        'lastSync': ServerValue.timestamp,
-      });
+      // Only seed consumer-specific data if the role is 'user'
+      if (role == 'user') {
+        // 2. Device Registration
+        await _db.ref('Devices/$meterId').set({
+          'uid': uid,
+          'address': '123 Maple Avenue, Apt 4B',
+          'firmwareVersion': 'v2.1',
+          'status': 'Online',
+          'lastSync': ServerValue.timestamp,
+        });
 
-      // 3. Initial Live Reading
-      await _db.ref('EnergyReadings/live/$meterId').set({
-        'voltage': 230.0,
-        'current': 14.2,
-        'power': 3.4,
-        'timestamp': ServerValue.timestamp,
-      });
+        // 3. Initial Live Reading
+        await _db.ref('EnergyReadings/live/$meterId').set({
+          'voltage': 230.0,
+          'current': 14.2,
+          'power': 3.4,
+          'timestamp': ServerValue.timestamp,
+        });
 
-      // 4. Start Simulation
-      startReadingSimulation(meterId);
+        // 4. Start Simulation
+        startReadingSimulation(meterId);
 
-      // 4. Initial Alert
+        // 5. Initial Bill
+        await generateMonthlyBill(uid, meterId, 'JANUARY 2026');
+      }
+
+      // 4. Initial Alert (Everyone gets a welcome alert)
       await _db.ref('Alerts/$uid/initial_alert').set({
         'title': 'Welcome to WattX',
-        'message': 'Your smart meter has been successfully connected.',
+        'message':
+            'Your ${role == 'user' ? 'smart meter' : 'portal'} has been successfully connected.',
         'type': 'info',
         'timestamp': ServerValue.timestamp,
         'isRead': false,
       });
-
-      // 5. Initial Bill
-      await generateMonthlyBill(uid, meterId, 'JANUARY 2026');
     } catch (e) {
       debugPrint('Error seeding initial data: $e');
     }
