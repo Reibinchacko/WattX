@@ -182,16 +182,14 @@ class _SignupScreenState extends State<SignupScreen> {
                 // Name Field
                 _buildFieldLabel('Full Name'),
                 const SizedBox(height: 10),
-                _buildInputContainer(
-                  child: TextFormField(
-                    controller: _nameController,
-                    autovalidateMode: AutovalidateMode.onUserInteraction,
-                    decoration: const InputDecoration(
-                      hintText: 'Enter your full name',
-                      prefixIcon: Icon(Icons.person_outline_rounded, size: 22),
-                    ),
-                    validator: _validateName,
+                TextFormField(
+                  controller: _nameController,
+                  autovalidateMode: AutovalidateMode.onUserInteraction,
+                  decoration: const InputDecoration(
+                    hintText: 'Enter your full name',
+                    prefixIcon: Icon(Icons.person_outline_rounded, size: 22),
                   ),
+                  validator: _validateName,
                 ),
 
                 const SizedBox(height: 24),
@@ -199,17 +197,15 @@ class _SignupScreenState extends State<SignupScreen> {
                 // Email Field
                 _buildFieldLabel('Email Address'),
                 const SizedBox(height: 10),
-                _buildInputContainer(
-                  child: TextFormField(
-                    controller: _emailController,
-                    autovalidateMode: AutovalidateMode.onUserInteraction,
-                    keyboardType: TextInputType.emailAddress,
-                    decoration: const InputDecoration(
-                      hintText: 'Enter your email',
-                      prefixIcon: Icon(Icons.email_outlined, size: 22),
-                    ),
-                    validator: _validateEmail,
+                TextFormField(
+                  controller: _emailController,
+                  autovalidateMode: AutovalidateMode.onUserInteraction,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: const InputDecoration(
+                    hintText: 'Enter your email',
+                    prefixIcon: Icon(Icons.email_outlined, size: 22),
                   ),
+                  validator: _validateEmail,
                 ),
 
                 const SizedBox(height: 24),
@@ -217,29 +213,27 @@ class _SignupScreenState extends State<SignupScreen> {
                 // Password Field
                 _buildFieldLabel('Password'),
                 const SizedBox(height: 10),
-                _buildInputContainer(
-                  child: TextFormField(
-                    controller: _passwordController,
-                    autovalidateMode: AutovalidateMode.onUserInteraction,
-                    obscureText: !_isPasswordVisible,
-                    decoration: InputDecoration(
-                      hintText: 'Enter your password',
-                      prefixIcon:
-                          const Icon(Icons.lock_outline_rounded, size: 22),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _isPasswordVisible
-                              ? Icons.visibility_off_outlined
-                              : Icons.visibility_outlined,
-                          size: 20,
-                          color: Colors.black38,
-                        ),
-                        onPressed: () => setState(
-                            () => _isPasswordVisible = !_isPasswordVisible),
+                TextFormField(
+                  controller: _passwordController,
+                  autovalidateMode: AutovalidateMode.onUserInteraction,
+                  obscureText: !_isPasswordVisible,
+                  decoration: InputDecoration(
+                    hintText: 'Enter your password',
+                    prefixIcon:
+                        const Icon(Icons.lock_outline_rounded, size: 22),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _isPasswordVisible
+                            ? Icons.visibility_off_outlined
+                            : Icons.visibility_outlined,
+                        size: 20,
+                        color: Colors.black38,
                       ),
+                      onPressed: () => setState(
+                          () => _isPasswordVisible = !_isPasswordVisible),
                     ),
-                    validator: _validatePassword,
                   ),
+                  validator: _validatePassword,
                 ),
 
                 const SizedBox(height: 24),
@@ -247,29 +241,27 @@ class _SignupScreenState extends State<SignupScreen> {
                 // Confirm Password Field
                 _buildFieldLabel('Confirm Password'),
                 const SizedBox(height: 10),
-                _buildInputContainer(
-                  child: TextFormField(
-                    controller: _confirmPasswordController,
-                    autovalidateMode: AutovalidateMode.onUserInteraction,
-                    obscureText: !_isConfirmPasswordVisible,
-                    decoration: InputDecoration(
-                      hintText: 'Confirm your password',
-                      prefixIcon: const Icon(Icons.shield_outlined, size: 22),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _isConfirmPasswordVisible
-                              ? Icons.visibility_off_outlined
-                              : Icons.visibility_outlined,
-                          size: 20,
-                          color: Colors.black38,
-                        ),
-                        onPressed: () => setState(() =>
-                            _isConfirmPasswordVisible =
-                                !_isConfirmPasswordVisible),
+                TextFormField(
+                  controller: _confirmPasswordController,
+                  autovalidateMode: AutovalidateMode.onUserInteraction,
+                  obscureText: !_isConfirmPasswordVisible,
+                  decoration: InputDecoration(
+                    hintText: 'Confirm your password',
+                    prefixIcon: const Icon(Icons.shield_outlined, size: 22),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _isConfirmPasswordVisible
+                            ? Icons.visibility_off_outlined
+                            : Icons.visibility_outlined,
+                        size: 20,
+                        color: Colors.black38,
                       ),
+                      onPressed: () => setState(() =>
+                          _isConfirmPasswordVisible =
+                              !_isConfirmPasswordVisible),
                     ),
-                    validator: _validateConfirmPassword,
                   ),
+                  validator: _validateConfirmPassword,
                 ),
 
                 const SizedBox(height: 48),
@@ -332,17 +324,6 @@ class _SignupScreenState extends State<SignupScreen> {
         fontWeight: FontWeight.w700,
         color: AppTheme.midnightCharcoal.withValues(alpha: 0.7),
       ),
-    );
-  }
-
-  Widget _buildInputContainer({required Widget child}) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppTheme.surfaceWhite,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: AppTheme.softShadow,
-      ),
-      child: child,
     );
   }
 }

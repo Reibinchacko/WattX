@@ -247,87 +247,21 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
                   const SizedBox(height: 12),
 
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(30),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withAlpha((0.05 * 255).toInt()),
-                          blurRadius: 10,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
+                  TextFormField(
+                    controller: _emailController,
+                    keyboardType: TextInputType.emailAddress,
+                    style: GoogleFonts.inter(
+                      fontSize: 15,
+                      color: Colors.black,
                     ),
-                    child: TextFormField(
-                      controller: _emailController,
-                      keyboardType: TextInputType.emailAddress,
-                      style: GoogleFonts.inter(
-                        fontSize: 15,
-                        color: Colors.black,
+                    decoration: const InputDecoration(
+                      hintText: 'Enter your email',
+                      prefixIcon: Icon(
+                        Icons.email_outlined,
+                        size: 20,
                       ),
-                      decoration: InputDecoration(
-                        hintText: 'Enter your email',
-                        hintStyle: GoogleFonts.inter(
-                          color: const Color(0xFFBDBDBD),
-                        ),
-                        prefixIcon: Icon(
-                          Icons.email_outlined,
-                          color: _emailError != null
-                              ? const Color(0xFFFFB300)
-                              : const Color(0xFF9E9E9E),
-                          size: 20,
-                        ),
-                        suffixIcon: _emailError != null
-                            ? Padding(
-                                padding: const EdgeInsets.only(right: 16),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const Icon(Icons.error_outline,
-                                        color: Color(0xFFFFB300), size: 16),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      _emailError!,
-                                      style: GoogleFonts.inter(
-                                        color: const Color(0xFFFFB300),
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              )
-                            : null,
-                        errorStyle: const TextStyle(fontSize: 0, height: 0),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(30),
-                          borderSide: BorderSide.none,
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(30),
-                          borderSide: _emailError != null
-                              ? const BorderSide(
-                                  color: Color(0xFF212121), width: 1.2)
-                              : BorderSide.none,
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(30),
-                          borderSide: BorderSide(
-                              color: _emailError != null
-                                  ? const Color(0xFF212121)
-                                  : Colors.black12,
-                              width: 1.5),
-                        ),
-                        filled: true,
-                        fillColor: Colors.white,
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 18,
-                        ),
-                      ),
-                      validator: _validateEmail,
                     ),
+                    validator: _validateEmail,
                   ),
 
                   const SizedBox(height: 40),

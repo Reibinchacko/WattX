@@ -190,13 +190,10 @@ class _KsebOfficerDashboardScreenState
             ),
           ),
         ),
-        StreamBuilder<double>(
-          stream: _dbService
-              .getSystemLivePowerStream(), // This is total power, but I need high usage count
-          // Let's refine the stream or just use a placeholder for now if I don't want to add another complex stream
-          // Actually, let's just make it show something dynamic for now or add a quick filter.
+        StreamBuilder<int>(
+          stream: _dbService.getHighUsageCountStream(),
           builder: (context, snapshot) => _buildStatCard(
-            '1,200',
+            snapshot.data?.toString() ?? '...',
             'High Usage',
             Icons.trending_up_rounded,
             const Color(0xFFFFB300),
@@ -289,89 +286,91 @@ class _KsebOfficerDashboardScreenState
             ),
           ),
           const SizedBox(height: 32),
-          SizedBox(
-            height: 180,
-            child: LineChart(
-              LineChartData(
-                gridData: const FlGridData(show: false),
-                titlesData: FlTitlesData(
-                  show: true,
-                  topTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false)),
-                  rightTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false)),
-                  leftTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false)),
-                  bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 30,
-                      interval: 1,
-                      getTitlesWidget: (value, meta) {
-                        const days = [
-                          'Sun',
-                          'Mon',
-                          'Tue',
-                          'Wed',
-                          'Thu',
-                          'Fri',
-                          'Sat'
-                        ];
-                        if (value < 0 || value >= days.length) {
-                          return const SizedBox();
-                        }
-                        return Padding(
-                          padding: const EdgeInsets.only(top: 8.0),
-                          child: Text(
-                            days[value.toInt()],
-                            style: GoogleFonts.inter(
-                              color: const Color(0xFF919EAB),
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ),
-                borderData: FlBorderData(show: false),
-                lineBarsData: [
-                  LineChartBarData(
-                    spots: const [
-                      FlSpot(0, 1.2),
-                      FlSpot(1, 1.8),
-                      FlSpot(2, 1.5),
-                      FlSpot(3, 2.2),
-                      FlSpot(4, 1.9),
-                      FlSpot(5, 2.8),
-                      FlSpot(6, 3.2),
-                    ],
-                    isCurved: true,
-                    color: AppTheme.primaryGold,
-                    barWidth: 4,
-                    dotData: const FlDotData(show: false),
-                    belowBarData: BarAreaData(
+          StreamBuilder<List<double>>(
+            stream:
+                _dbService.getAggregateHistoricalConsumptionStream('METER001'),
+            builder: (context, snapshot) {
+              final readings =
+                  snapshot.data ?? [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0];
+              return SizedBox(
+                height: 180,
+                child: LineChart(
+                  LineChartData(
+                    gridData: const FlGridData(show: false),
+                    titlesData: FlTitlesData(
                       show: true,
-                      gradient: LinearGradient(
-                        colors: [
-                          AppTheme.primaryGold.withValues(alpha: 0.3),
-                          AppTheme.primaryGold.withValues(alpha: 0.0),
-                        ],
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
+                      topTitles: const AxisTitles(
+                          sideTitles: SideTitles(showTitles: false)),
+                      rightTitles: const AxisTitles(
+                          sideTitles: SideTitles(showTitles: false)),
+                      leftTitles: const AxisTitles(
+                          sideTitles: SideTitles(showTitles: false)),
+                      bottomTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          reservedSize: 30,
+                          interval: 1,
+                          getTitlesWidget: (value, meta) {
+                            const days = [
+                              'Sun',
+                              'Mon',
+                              'Tue',
+                              'Wed',
+                              'Thu',
+                              'Fri',
+                              'Sat'
+                            ];
+                            if (value < 0 || value >= days.length) {
+                              return const SizedBox();
+                            }
+                            return Padding(
+                              padding: const EdgeInsets.only(top: 8.0),
+                              child: Text(
+                                days[value.toInt()],
+                                style: GoogleFonts.inter(
+                                  color: const Color(0xFF919EAB),
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                    borderData: FlBorderData(show: false),
+                    lineBarsData: [
+                      LineChartBarData(
+                        spots: readings.asMap().entries.map((e) {
+                          return FlSpot(e.key.toDouble(), e.value);
+                        }).toList(),
+                        isCurved: true,
+                        color: AppTheme.primaryGold,
+                        barWidth: 4,
+                        dotData: const FlDotData(show: false),
+                        belowBarData: BarAreaData(
+                          show: true,
+                          gradient: LinearGradient(
+                            colors: [
+                              AppTheme.primaryGold.withValues(alpha: 0.3),
+                              AppTheme.primaryGold.withValues(alpha: 0.0),
+                            ],
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                          ),
+                        ),
+                      ),
+                    ],
+                    lineTouchData: LineTouchData(
+                      touchTooltipData: LineTouchTooltipData(
+                        getTooltipColor: (_) => AppTheme.midnightCharcoal,
+                        tooltipRoundedRadius: 8,
                       ),
                     ),
                   ),
-                ],
-                lineTouchData: LineTouchData(
-                  touchTooltipData: LineTouchTooltipData(
-                    getTooltipColor: (_) => AppTheme.midnightCharcoal,
-                    tooltipRoundedRadius: 8,
-                  ),
                 ),
-              ),
-            ),
+              );
+            },
           ),
         ],
       ),

@@ -41,7 +41,7 @@ class AuthService {
     required String email,
     required String password,
     required String name,
-    String role = 'user',
+    String? role,
   }) async {
     try {
       // Create user in Firebase Auth
@@ -73,10 +73,14 @@ class AuthService {
     required String password,
   }) async {
     try {
-      return await _auth.signInWithEmailAndPassword(
+      final userCredential = await _auth.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
+      // Ensure role is correctly synced with database based on email rules
+      await _databaseService.ensureRoleCorrectness(
+          userCredential.user!.uid, email);
+      return userCredential;
     } on FirebaseAuthException catch (e) {
       throw Exception(_getFriendlyErrorMessage(e));
     } catch (e) {
@@ -110,15 +114,10 @@ class AuthService {
       UserCredential userCredential =
           await _auth.signInWithCredential(credential);
 
-      // Check if user is new (no record in database)
-      if (userCredential.additionalUserInfo?.isNewUser ?? false) {
-        // Seed initial data for new Google users
-        await _databaseService.seedInitialData(
-          userCredential.user!.uid,
-          userCredential.user!.email ?? '',
-          userCredential.user!.displayName ?? 'New User',
-        );
-      }
+      // Ensure role is correctly synced with database based on email rules
+      await _databaseService.ensureRoleCorrectness(
+          userCredential.user!.uid, userCredential.user!.email ?? '',
+          name: userCredential.user!.displayName);
 
       return userCredential;
     } on FirebaseAuthException catch (e) {

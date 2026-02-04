@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'theme/app_theme.dart';
+import 'services/database_service.dart';
+import 'models/alert_model.dart';
 
 class KsebAlertsScreen extends StatefulWidget {
   const KsebAlertsScreen({super.key});
@@ -10,109 +12,96 @@ class KsebAlertsScreen extends StatefulWidget {
 }
 
 class _KsebAlertsScreenState extends State<KsebAlertsScreen> {
+  final DatabaseService _dbService = DatabaseService();
   String _selectedFilter = 'All Alerts';
 
-  final List<Map<String, dynamic>> _alerts = [
-    {
-      'type': 'CRITICAL',
-      'title': 'Phase Failure',
-      'name': 'Ramesh Kumar',
-      'consumerId': '12345',
-      'location': 'Sec B, Pallimukku',
-      'time': '10:42 AM',
-      'status': 'NEW',
-      'icon': Icons.flash_on_rounded,
-      'color': const Color(0xFFD32F2F),
-    },
-    {
-      'type': 'WARNING',
-      'title': 'Overload Detected',
-      'name': 'Anjali Menon',
-      'consumerId': '67890',
-      'location': 'Sec A, Kowdiar',
-      'time': '09:15 AM',
-      'status': 'NEW',
-      'icon': Icons.warning_amber_rounded,
-      'color': const Color(0xFFFF8A00),
-    },
-    {
-      'type': 'TAMPER',
-      'title': 'Cover Open Attempt',
-      'name': 'Govt. High School',
-      'consumerId': '99100',
-      'location': 'Sec C, Peroorkada',
-      'time': '08:30 AM',
-      'status': 'VIEWED',
-      'icon': Icons.lock_outline_rounded,
-      'color': const Color(0xFFEAA900),
-    },
-  ];
-
-  List<Map<String, dynamic>> get _filteredAlerts {
-    if (_selectedFilter == 'All Alerts') return _alerts;
-    return _alerts
+  List<AlertModel> _filterAlerts(List<AlertModel> alerts) {
+    if (_selectedFilter == 'All Alerts') return alerts;
+    return alerts
         .where((alert) =>
-            alert['type'].toString().toUpperCase() ==
-            _selectedFilter.toUpperCase())
+            alert.type.toUpperCase() == _selectedFilter.toUpperCase())
         .toList();
   }
 
   @override
   Widget build(BuildContext context) {
-    final filtered = _filteredAlerts;
     return Scaffold(
       backgroundColor: const Color(0xFFF9F9F8),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildHeader(context),
-              const SizedBox(height: 24),
-              _buildFilterChips(),
-              const SizedBox(height: 24),
-              _buildSummaryCards(),
-              const SizedBox(height: 32),
-              _buildSectionTitle('TODAY', '${filtered.length} New'),
-              const SizedBox(height: 16),
-              ...filtered.map((alert) => Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
-                    child: _buildAlertCard(
-                      type: alert['type'],
-                      title: alert['title'],
-                      name: alert['name'],
-                      consumerId: alert['consumerId'],
-                      location: alert['location'],
-                      time: alert['time'],
-                      status: alert['status'],
-                      icon: alert['icon'],
-                      color: alert['color'],
-                    ),
-                  )),
-              const SizedBox(height: 32),
-              _buildSectionTitle('YESTERDAY', ''),
-              const SizedBox(height: 16),
-              _buildResolvedCard(
-                title: 'Outage Reported',
-                name: 'Sandeep Varma',
-                time: 'Yesterday, 4:15 PM',
-                icon: Icons.power_off_rounded,
-              ),
-              const SizedBox(height: 32),
-              Center(
-                child: Text(
-                  'End of list',
-                  style: GoogleFonts.inter(
-                    fontSize: 12,
-                    color: Colors.black26,
-                    fontWeight: FontWeight.w500,
+        child: StreamBuilder<List<AlertModel>>(
+          stream: _dbService.getAlertsStream(),
+          builder: (context, snapshot) {
+            final allAlerts = snapshot.data ?? [];
+            final filtered = _filterAlerts(allAlerts);
+            final criticalCount =
+                allAlerts.where((a) => a.type == 'CRITICAL').length;
+            final resolvedCount =
+                allAlerts.where((a) => a.status == 'RESOLVED').length;
+
+            return SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildHeader(context),
+                  const SizedBox(height: 24),
+                  _buildFilterChips(),
+                  const SizedBox(height: 24),
+                  _buildSummaryCards(
+                      criticalCount: criticalCount,
+                      resolvedCount: resolvedCount),
+                  const SizedBox(height: 32),
+                  _buildSectionTitle('TODAY', '${filtered.length} Alerts'),
+                  const SizedBox(height: 16),
+                  if (filtered.isEmpty)
+                    Center(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 40),
+                        child: Text('No alerts found',
+                            style: GoogleFonts.inter(color: Colors.grey)),
+                      ),
+                    )
+                  else
+                    ...filtered.map((alert) => Padding(
+                          padding: const EdgeInsets.only(bottom: 16),
+                          child: _buildAlertCard(
+                            type: alert.type,
+                            title: alert.title,
+                            name: 'Meter #${alert.meterId}',
+                            consumerId: alert.meterId,
+                            location: 'Zone 4',
+                            time:
+                                '${alert.timestamp.hour.toString().padLeft(2, '0')}:${alert.timestamp.minute.toString().padLeft(2, '0')}',
+                            status: alert.status,
+                            icon: _getAlertIcon(alert.type),
+                            color: _getAlertColor(alert.type),
+                          ),
+                        )),
+                  const SizedBox(height: 32),
+                  _buildSectionTitle('HISTORY', ''),
+                  const SizedBox(height: 16),
+                  _buildResolvedCard(
+                    title: 'System Initialized',
+                    name: 'Admin',
+                    time: 'Recent',
+                    icon: Icons.info_outline_rounded,
                   ),
-                ),
+                  const SizedBox(height: 32),
+                  Center(
+                    child: Text(
+                      'End of list',
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        color: Colors.black26,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 80),
+                ],
               ),
-              const SizedBox(height: 80),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );
@@ -171,7 +160,7 @@ class _KsebAlertsScreenState extends State<KsebAlertsScreen> {
       {'label': 'All Alerts', 'color': Colors.transparent},
       {'label': 'Critical', 'color': const Color(0xFFD32F2F)},
       {'label': 'Warning', 'color': const Color(0xFFFFB300)},
-      {'label': 'Review', 'color': Colors.transparent},
+      {'label': 'Tamper', 'color': const Color(0xFFEAA900)},
     ];
 
     return SingleChildScrollView(
@@ -228,7 +217,7 @@ class _KsebAlertsScreenState extends State<KsebAlertsScreen> {
     );
   }
 
-  Widget _buildSummaryCards() {
+  Widget _buildSummaryCards({int criticalCount = 0, int resolvedCount = 0}) {
     return Row(
       children: [
         Expanded(
@@ -261,7 +250,7 @@ class _KsebAlertsScreenState extends State<KsebAlertsScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Active Faults',
+                      'Critical Faults',
                       style: GoogleFonts.inter(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
@@ -273,7 +262,7 @@ class _KsebAlertsScreenState extends State<KsebAlertsScreen> {
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(
-                          '12',
+                          criticalCount.toString(),
                           style: GoogleFonts.inter(
                             fontSize: 32,
                             fontWeight: FontWeight.w800,
@@ -284,7 +273,7 @@ class _KsebAlertsScreenState extends State<KsebAlertsScreen> {
                         Padding(
                           padding: const EdgeInsets.only(bottom: 6),
                           child: Text(
-                            'Requires Action',
+                            'Active',
                             style: GoogleFonts.inter(
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
@@ -338,7 +327,7 @@ class _KsebAlertsScreenState extends State<KsebAlertsScreen> {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      '45',
+                      resolvedCount.toString(),
                       style: GoogleFonts.inter(
                         fontSize: 32,
                         fontWeight: FontWeight.w800,
@@ -349,7 +338,7 @@ class _KsebAlertsScreenState extends State<KsebAlertsScreen> {
                     Padding(
                       padding: const EdgeInsets.only(bottom: 6),
                       child: Text(
-                        'Today',
+                        'Total',
                         style: GoogleFonts.inter(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
@@ -552,10 +541,8 @@ class _KsebAlertsScreenState extends State<KsebAlertsScreen> {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        Text(
-                          '•',
-                          style: GoogleFonts.inter(color: Colors.black12),
-                        ),
+                        Text('•',
+                            style: GoogleFonts.inter(color: Colors.black12)),
                         const SizedBox(width: 8),
                         Text(
                           location,
@@ -670,5 +657,31 @@ class _KsebAlertsScreenState extends State<KsebAlertsScreen> {
         ],
       ),
     );
+  }
+
+  IconData _getAlertIcon(String type) {
+    switch (type.toUpperCase()) {
+      case 'CRITICAL':
+        return Icons.flash_on_rounded;
+      case 'WARNING':
+        return Icons.warning_amber_rounded;
+      case 'TAMPER':
+        return Icons.lock_outline_rounded;
+      default:
+        return Icons.notifications_none_rounded;
+    }
+  }
+
+  Color _getAlertColor(String type) {
+    switch (type.toUpperCase()) {
+      case 'CRITICAL':
+        return const Color(0xFFD32F2F);
+      case 'WARNING':
+        return const Color(0xFFFF8A00);
+      case 'TAMPER':
+        return const Color(0xFFEAA900);
+      default:
+        return Colors.blue;
+    }
   }
 }

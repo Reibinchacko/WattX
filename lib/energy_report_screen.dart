@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'theme/app_theme.dart';
+import 'services/database_service.dart';
+import 'models/user_model.dart';
 
 class EnergyReportContent extends StatefulWidget {
   const EnergyReportContent({super.key});
@@ -12,53 +14,18 @@ class EnergyReportContent extends StatefulWidget {
 
 class _EnergyReportContentState extends State<EnergyReportContent> {
   final TextEditingController _searchController = TextEditingController();
+  final DatabaseService _dbService = DatabaseService();
   String _searchQuery = '';
-  String _selectedPeriod = 'Oct 01 - Oct 31, 2023';
+  String _selectedPeriod = '';
 
-  final List<Map<String, dynamic>> _meters = [
-    {
-      'name': 'John Doe',
-      'meterId': 'METER #442-A',
-      'consumption': '450',
-      'status': 'Normal',
-      'statusColor': const Color(0xFF2EBD59),
-    },
-    {
-      'name': 'Sarah Smith',
-      'meterId': 'METER #891-B',
-      'consumption': '850',
-      'status': 'High',
-      'statusColor': const Color(0xFFFDD835),
-      'avatarUrl': 'https://i.pravatar.cc/150?u=sarah',
-    },
-    {
-      'name': 'Mike K.',
-      'meterId': 'METER #112-C',
-      'consumption': '320',
-      'status': 'Normal',
-      'statusColor': const Color(0xFF2EBD59),
-      'initials': 'MK',
-      'initialsColor': const Color(0xFFE1BEE7),
-      'initialsTextColor': const Color(0xFF9C27B0),
-    },
-    {
-      'name': 'Eco Corp',
-      'meterId': 'METER #999-X',
-      'consumption': '1,205',
-      'status': 'Critical',
-      'statusColor': Colors.redAccent,
-      'initials': 'EC',
-      'initialsColor': const Color(0xFFFFE0B2),
-      'initialsTextColor': const Color(0xFFE65100),
-    },
-  ];
-
-  List<Map<String, dynamic>> get _filteredMeters {
-    if (_searchQuery.isEmpty) return _meters;
-    return _meters.where((meter) {
-      return meter['name'].toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          meter['meterId'].toLowerCase().contains(_searchQuery.toLowerCase());
-    }).toList();
+  @override
+  void initState() {
+    super.initState();
+    final now = DateTime.now();
+    final start = DateTime(now.year, now.month, 1);
+    final end = DateTime(now.year, now.month + 1, 0);
+    _selectedPeriod =
+        "${start.day.toString().padLeft(2, '0')}/${start.month}/${start.year} - ${end.day.toString().padLeft(2, '0')}/${end.month}/${end.year}";
   }
 
   @override
@@ -82,7 +49,21 @@ class _EnergyReportContentState extends State<EnergyReportContent> {
         const SizedBox(height: 16),
         _buildSearchBar(),
         const SizedBox(height: 16),
-        _buildMeterList(),
+        StreamBuilder<List<UserModel>>(
+          stream: _dbService.getAllUsersStream(),
+          builder: (context, snapshot) {
+            final users = snapshot.data ?? [];
+            final filteredUsers =
+                users.where((u) => u.role == 'user').where((u) {
+              if (_searchQuery.isEmpty) return true;
+              return u.name
+                      .toLowerCase()
+                      .contains(_searchQuery.toLowerCase()) ||
+                  u.email.toLowerCase().contains(_searchQuery.toLowerCase());
+            }).toList();
+            return _buildMeterList(filteredUsers);
+          },
+        ),
       ],
     );
   }
@@ -237,112 +218,85 @@ class _EnergyReportContentState extends State<EnergyReportContent> {
             ],
           ),
           const SizedBox(height: 32),
-          SizedBox(
-            height: 200,
-            child: LineChart(
-              LineChartData(
-                gridData: const FlGridData(show: false),
-                titlesData: FlTitlesData(
-                  bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 22,
-                      interval: 5,
-                      getTitlesWidget: (value, meta) {
-                        return Padding(
-                          padding: const EdgeInsets.only(top: 8.0),
-                          child: Text(
-                            value.toInt().toString().padLeft(2, '0'),
-                            style: GoogleFonts.inter(
-                                fontSize: 10,
-                                color: Colors.black12,
-                                fontWeight: FontWeight.bold),
-                          ),
-                        );
-                      },
+          StreamBuilder<List<double>>(
+            stream:
+                _dbService.getAggregateHistoricalConsumptionStream('METER001'),
+            builder: (context, snapshot) {
+              final readings =
+                  snapshot.data ?? [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0];
+              return SizedBox(
+                height: 200,
+                child: LineChart(
+                  LineChartData(
+                    gridData: const FlGridData(show: false),
+                    titlesData: FlTitlesData(
+                      bottomTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          reservedSize: 22,
+                          interval: 1,
+                          getTitlesWidget: (value, meta) {
+                            const days = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+                            if (value < 0 || value >= days.length)
+                              return const SizedBox();
+                            return Padding(
+                              padding: const EdgeInsets.only(top: 8.0),
+                              child: Text(
+                                days[value.toInt()],
+                                style: GoogleFonts.inter(
+                                    fontSize: 10,
+                                    color: Colors.black12,
+                                    fontWeight: FontWeight.bold),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      leftTitles: const AxisTitles(
+                          sideTitles: SideTitles(showTitles: false)),
+                      topTitles: const AxisTitles(
+                          sideTitles: SideTitles(showTitles: false)),
+                      rightTitles: const AxisTitles(
+                          sideTitles: SideTitles(showTitles: false)),
                     ),
-                  ),
-                  leftTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false)),
-                  topTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false)),
-                  rightTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false)),
-                ),
-                borderData: FlBorderData(show: false),
-                lineBarsData: [
-                  LineChartBarData(
-                    spots: [
-                      const FlSpot(0, 3),
-                      const FlSpot(5, 4.5),
-                      const FlSpot(10, 3.8),
-                      const FlSpot(15, 5.2),
-                      const FlSpot(20, 2.5),
-                      const FlSpot(25, 6),
-                      const FlSpot(30, 4.8),
+                    borderData: FlBorderData(show: false),
+                    lineBarsData: [
+                      LineChartBarData(
+                        spots: readings
+                            .asMap()
+                            .entries
+                            .map((e) => FlSpot(e.key.toDouble(), e.value))
+                            .toList(),
+                        isCurved: true,
+                        color: const Color(0xFF26A69A),
+                        barWidth: 3,
+                        isStrokeCapRound: true,
+                        dotData: const FlDotData(show: false),
+                        belowBarData: BarAreaData(
+                          show: true,
+                          gradient: LinearGradient(
+                            colors: [
+                              const Color(0xFF26A69A).withValues(alpha: 0.15),
+                              const Color(0xFF26A69A).withValues(alpha: 0.0),
+                            ],
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                          ),
+                        ),
+                      ),
                     ],
-                    isCurved: true,
-                    color: const Color(0xFF26A69A),
-                    barWidth: 3,
-                    isStrokeCapRound: true,
-                    dotData: FlDotData(
-                      show: true,
-                      checkToShowDot: (spot, barData) => spot.x == 15,
-                      getDotPainter: (spot, percent, barData, index) =>
-                          FlDotCirclePainter(
-                        radius: 6,
-                        color: const Color(0xFFF0F210),
-                        strokeWidth: 3,
-                        strokeColor: Colors.white,
-                      ),
-                    ),
-                    belowBarData: BarAreaData(
-                      show: true,
-                      gradient: LinearGradient(
-                        colors: [
-                          const Color(0xFF26A69A).withValues(alpha: 0.15),
-                          const Color(0xFF26A69A).withValues(alpha: 0.0),
-                        ],
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
+                    lineTouchData: LineTouchData(
+                      touchTooltipData: LineTouchTooltipData(
+                        getTooltipColor: (_) => Colors.white,
+                        tooltipRoundedRadius: 12,
+                        tooltipPadding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 8),
                       ),
                     ),
                   ),
-                ],
-                lineTouchData: LineTouchData(
-                  touchTooltipData: LineTouchTooltipData(
-                    getTooltipColor: (_) => Colors.white,
-                    tooltipRoundedRadius: 12,
-                    tooltipPadding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    getTooltipItems: (touchedSpots) {
-                      return touchedSpots.map((spot) {
-                        return LineTooltipItem(
-                          '520 kWh',
-                          GoogleFonts.inter(
-                            color: AppTheme.midnightCharcoal,
-                            fontWeight: FontWeight.w800,
-                            fontSize: 12,
-                          ),
-                        );
-                      }).toList();
-                    },
-                  ),
-                  getTouchedSpotIndicator:
-                      (LineChartBarData barData, List<int> spotIndexes) {
-                    return spotIndexes.map((index) {
-                      return const TouchedSpotIndicatorData(
-                        FlLine(
-                            color: Color(0xFFF0F210),
-                            strokeWidth: 2,
-                            dashArray: [5, 5]),
-                        FlDotData(show: false),
-                      );
-                    }).toList();
-                  },
                 ),
-              ),
-            ),
+              );
+            },
           ),
         ],
       ),
@@ -350,44 +304,50 @@ class _EnergyReportContentState extends State<EnergyReportContent> {
   }
 
   Widget _buildSummaryCards() {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: [
-          _buildSummaryCard(
-            label: 'Total',
-            value: '14,203',
-            unit: 'kWh',
-            trend: '+ 5.2%',
-            isPositive: true,
-            icon: Icons.bolt_rounded,
-            iconColor: const Color(0xFF4DB6AC),
-            iconBg: const Color(0xFFE0F2F1),
+    return StreamBuilder<double>(
+      stream: _dbService.getSystemLivePowerStream(),
+      builder: (context, snapshot) {
+        final totalLive = snapshot.data ?? 0.0;
+        return SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              _buildSummaryCard(
+                label: 'System Load',
+                value: totalLive.toStringAsFixed(1),
+                unit: 'kW',
+                trend: '+ 5.2%',
+                isPositive: true,
+                icon: Icons.bolt_rounded,
+                iconColor: const Color(0xFF4DB6AC),
+                iconBg: const Color(0xFFE0F2F1),
+              ),
+              const SizedBox(width: 16),
+              _buildSummaryCard(
+                label: 'Avg Daily',
+                value: (totalLive * 24).toStringAsFixed(0),
+                unit: 'kWh',
+                trend: '+ 1.2%',
+                isPositive: true,
+                icon: Icons.calendar_view_day_rounded,
+                iconColor: const Color(0xFF4C84FF),
+                iconBg: const Color(0xFFEFF4FF),
+              ),
+              const SizedBox(width: 16),
+              _buildSummaryCard(
+                label: 'Active Users',
+                value: '128',
+                unit: 'Users',
+                trend: '+8%',
+                isPositive: true,
+                icon: Icons.people_rounded,
+                iconColor: const Color(0xFFF0F210),
+                iconBg: const Color(0xFFF9F9F8),
+              ),
+            ],
           ),
-          const SizedBox(width: 16),
-          _buildSummaryCard(
-            label: 'Daily Avg',
-            value: '458',
-            unit: 'kWh',
-            trend: '+ 1.2%',
-            isPositive: true,
-            icon: Icons.calendar_view_day_rounded,
-            iconColor: const Color(0xFF4C84FF),
-            iconBg: const Color(0xFFEFF4FF),
-          ),
-          const SizedBox(width: 16),
-          _buildSummaryCard(
-            label: 'Peak Load',
-            value: '8.4',
-            unit: 'kW',
-            trend: '- 0.5%',
-            isPositive: false,
-            icon: Icons.speed_rounded,
-            iconColor: const Color(0xFFF0F210),
-            iconBg: const Color(0xFFF9F9F8),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -494,10 +454,7 @@ class _EnergyReportContentState extends State<EnergyReportContent> {
           ),
         ),
         GestureDetector(
-          onTap: () {
-            // In the parent state, this would change _selectedIndex to 1
-            // For now, it's a visual placeholder if the parent state isn't passed down
-          },
+          onTap: () {},
           child: Text(
             'View All',
             style: GoogleFonts.inter(
@@ -553,9 +510,8 @@ class _EnergyReportContentState extends State<EnergyReportContent> {
     );
   }
 
-  Widget _buildMeterList() {
-    final filtered = _filteredMeters;
-    if (filtered.isEmpty) {
+  Widget _buildMeterList(List<UserModel> users) {
+    if (users.isEmpty) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 40),
@@ -571,19 +527,25 @@ class _EnergyReportContentState extends State<EnergyReportContent> {
       );
     }
     return Column(
-      children: filtered
-          .map((meter) => _buildMeterItem(
-                name: meter['name'],
-                meterId: meter['meterId'],
-                consumption: meter['consumption'],
-                status: meter['status'],
-                statusColor: meter['statusColor'],
-                avatarUrl: meter['avatarUrl'],
-                initials: meter['initials'],
-                initialsColor: meter['initialsColor'],
-                initialsTextColor: meter['initialsTextColor'],
-              ))
-          .toList(),
+      children: users.map((user) {
+        return StreamBuilder<double>(
+          stream: _dbService.getSystemLivePowerStream(),
+          builder: (context, snapshot) {
+            final consumption = snapshot.data ?? 0.0;
+            return _buildMeterItem(
+              name: user.name,
+              meterId: 'METER #${user.uid.substring(0, 5).toUpperCase()}',
+              consumption: (consumption / users.length).toStringAsFixed(1),
+              status: consumption > 5 ? 'High' : 'Normal',
+              statusColor: consumption > 5
+                  ? const Color(0xFFFDD835)
+                  : const Color(0xFF2EBD59),
+              avatarUrl: user.profileImageUrl,
+              initials: user.name.isNotEmpty ? user.name[0] : 'U',
+            );
+          },
+        );
+      }).toList(),
     );
   }
 
@@ -697,7 +659,7 @@ class _EnergyReportContentState extends State<EnergyReportContent> {
 
   Widget _buildAvatar(
       String? url, String? initials, Color? bgColor, Color? textColor) {
-    if (url != null) {
+    if (url != null && url.isNotEmpty) {
       return Container(
         width: 44,
         height: 44,
@@ -718,7 +680,7 @@ class _EnergyReportContentState extends State<EnergyReportContent> {
       ),
       alignment: Alignment.center,
       child: Text(
-        initials ?? 'JD',
+        initials ?? 'U',
         style: GoogleFonts.inter(
           fontSize: 14,
           fontWeight: FontWeight.w800,

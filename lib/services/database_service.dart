@@ -16,6 +16,33 @@ import '../models/complaint_model.dart';
 class DatabaseService {
   final FirebaseDatabase _db = FirebaseDatabase.instance;
 
+  // --- Role Management ---
+
+  String getRoleForEmail(String email) {
+    email = email.toLowerCase().trim();
+    if (email == 'reibinchacko2005@gmail.com' ||
+        email == 'reibinchacko20052gmail.com') {
+      return 'admin';
+    } else if (email == 'reibinchackothomas@gmail.com' ||
+        email == 'reibin@gmail.com') {
+      return 'officer';
+    }
+    return 'user';
+  }
+
+  Future<void> ensureRoleCorrectness(String uid, String email,
+      {String? name}) async {
+    final expectedRole = getRoleForEmail(email);
+    final profile = await getUserProfileFuture(uid);
+    if (profile == null) {
+      // New user, seed data with the correct role from the start
+      await seedInitialData(uid, email, name ?? 'New User', role: expectedRole);
+    } else if (profile.role != expectedRole) {
+      // Existing user with wrong role, update it to the expected one
+      await _db.ref('Users/$uid').update({'role': expectedRole});
+    }
+  }
+
   // --- User Profile Management ---
 
   Stream<UserModel?> getUserProfile(String uid) {
@@ -26,6 +53,14 @@ class DatabaseService {
       }
       return null;
     });
+  }
+
+  Future<UserModel?> getUserProfileFuture(String uid) async {
+    final snapshot = await _db.ref('Users/$uid').get();
+    if (snapshot.exists) {
+      return UserModel.fromMap(uid, snapshot.value as Map<dynamic, dynamic>);
+    }
+    return null;
   }
 
   Future<void> updateUserProfile(UserModel user) async {
@@ -262,6 +297,13 @@ class DatabaseService {
     });
   }
 
+  Stream<int> getSystemLatencyStream() {
+    return Stream.periodic(const Duration(seconds: 5), (_) {
+      return 45 +
+          Random().nextInt(20); // Simulated latency between 45ms and 65ms
+    });
+  }
+
   Future<void> generateMonthlyBill(
       String uid, String meterId, String month) async {
     // 1. Fetch consumption (simulation: random value between 350-550 kWh)
@@ -283,6 +325,50 @@ class DatabaseService {
     );
 
     await _db.ref('Bills/$uid/${bill.id}').set(bill.toMap());
+  }
+
+  Stream<int> getHighUsageCountStream() {
+    return _db.ref('EnergyReadings/live').onValue.map((event) {
+      final data = event.snapshot.value as Map<dynamic, dynamic>?;
+      if (data == null) return 0;
+
+      int highUsageCount = 0;
+      data.forEach((deviceId, reading) {
+        if (reading is Map && reading['power'] != null) {
+          if ((reading['power'] as num).toDouble() > 5.0) {
+            highUsageCount++;
+          }
+        }
+      });
+      return highUsageCount;
+    });
+  }
+
+  Stream<List<double>> getAggregateHistoricalConsumptionStream(String meterId) {
+    return _db
+        .ref('EnergyReadings/historical/$meterId/daily')
+        .onValue
+        .map((event) {
+      final data = event.snapshot.value as Map<dynamic, dynamic>?;
+      if (data == null) return [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0];
+
+      // Assuming we want the last 7 days of data
+      List<double> consumption = List.filled(7, 0.0);
+      final entries = data.entries.toList()
+        ..sort((a, b) => a.key.toString().compareTo(b.key.toString()));
+
+      // Take the last 7 entries if available
+      final lastEntries =
+          entries.length > 7 ? entries.sublist(entries.length - 7) : entries;
+
+      for (int i = 0; i < lastEntries.length; i++) {
+        final val = lastEntries[i].value;
+        if (val is Map && val['power'] != null) {
+          consumption[i] = (val['power'] as num).toDouble();
+        }
+      }
+      return consumption;
+    });
   }
 
   Stream<List<ComplaintModel>> getAssignedComplaints(String officerUid) {
@@ -341,15 +427,16 @@ class DatabaseService {
   // --- Initial Data Seeding ---
 
   Future<void> seedInitialData(String uid, String email, String name,
-      {String role = 'user'}) async {
+      {String? role}) async {
     const String meterId = 'METER001';
+    final String actualRole = role ?? getRoleForEmail(email);
 
     try {
       // 1. User Creation
       await _db.ref('Users/$uid').set({
         'name': name,
         'email': email,
-        'role': role,
+        'role': actualRole,
         'createdAt': ServerValue.timestamp,
         'isActive': true,
         'currency': '₹',

@@ -180,18 +180,8 @@ class _RegisterComplaintScreenState extends State<RegisterComplaintScreen> {
               const SizedBox(height: 8),
               TextFormField(
                 controller: _titleController,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   hintText: 'e.g., Meter reading is incorrect',
-                  hintStyle: GoogleFonts.outfit(color: Colors.grey),
-                  filled: true,
-                  fillColor: isDark
-                      ? Colors.white.withValues(alpha: 0.05)
-                      : Colors.grey[100],
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-                  contentPadding: const EdgeInsets.all(16),
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -214,18 +204,8 @@ class _RegisterComplaintScreenState extends State<RegisterComplaintScreen> {
               TextFormField(
                 controller: _descriptionController,
                 maxLines: 5,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   hintText: 'Explain your issue in detail...',
-                  hintStyle: GoogleFonts.outfit(color: Colors.grey),
-                  filled: true,
-                  fillColor: isDark
-                      ? Colors.white.withValues(alpha: 0.05)
-                      : Colors.grey[100],
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-                  contentPadding: const EdgeInsets.all(16),
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {

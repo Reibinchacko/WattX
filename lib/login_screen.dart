@@ -6,6 +6,7 @@ import 'forgot_password_screen.dart';
 import 'signup_screen.dart';
 import 'kseb_officer_dashboard_screen.dart';
 import 'services/auth_service.dart';
+import 'services/database_service.dart';
 import 'theme/app_theme.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -22,6 +23,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final AuthService _authService = AuthService();
+  final DatabaseService _dbService = DatabaseService();
   final _formKey = GlobalKey<FormState>();
 
   @override
@@ -53,10 +55,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
   String? _validateEmail(String? value) {
     if (value == null || value.isEmpty) return 'Required';
-    if (value.trim() == 'reibinchacko20052gmail.com' ||
-        value.trim() == 'reibin@gmail.com') {
-      return null; // Allow requested admin emails
-    }
     final emailRegExp = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
     if (!emailRegExp.hasMatch(value)) return 'Invalid Email';
     return null;
@@ -75,21 +73,20 @@ class _LoginScreenState extends State<LoginScreen> {
       });
 
       try {
-        await _authService.signIn(
+        final userCredential = await _authService.signIn(
           email: _emailController.text.trim(),
           password: _passwordController.text.trim(),
         );
 
         if (mounted) {
-          final email = _emailController.text.trim();
-          final isAdmin = email == 'reibinchacko20052gmail.com' ||
-              email == 'reibinchacko2005@gmail.com';
-          final isKsebOfficer = email == 'reibin@gmail.com';
+          final userProfile =
+              await _dbService.getUserProfileFuture(userCredential.user!.uid);
+          final role = userProfile?.role ?? 'user';
 
           Widget destinationScreen;
-          if (isKsebOfficer) {
+          if (role == 'officer') {
             destinationScreen = const KsebOfficerDashboardScreen();
-          } else if (isAdmin) {
+          } else if (role == 'admin') {
             destinationScreen = const AdminDashboardScreen();
           } else {
             destinationScreen = const DashboardScreen();
@@ -135,18 +132,17 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
-      await _authService.signInWithGoogle();
+      final userCredential = await _authService.signInWithGoogle();
 
       if (mounted) {
-        final email = _authService.currentUser?.email;
-        final isAdmin = email == 'reibinchacko20052gmail.com' ||
-            email == 'reibinchacko2005@gmail.com';
-        final isKsebOfficer = email == 'reibin@gmail.com';
+        final userProfile =
+            await _dbService.getUserProfileFuture(userCredential.user!.uid);
+        final role = userProfile?.role ?? 'user';
 
         Widget destinationScreen;
-        if (isKsebOfficer) {
+        if (role == 'officer') {
           destinationScreen = const KsebOfficerDashboardScreen();
-        } else if (isAdmin) {
+        } else if (role == 'admin') {
           destinationScreen = const AdminDashboardScreen();
         } else {
           destinationScreen = const DashboardScreen();
@@ -250,21 +246,15 @@ class _LoginScreenState extends State<LoginScreen> {
                 // Email Field
                 _buildFieldLabel('Email Address'),
                 const SizedBox(height: 10),
-                _buildInputContainer(
-                  child: TextFormField(
-                    controller: _emailController,
-                    autovalidateMode: AutovalidateMode.onUserInteraction,
-                    style: Theme.of(context).textTheme.bodyLarge,
-                    decoration: InputDecoration(
-                      hintText: 'Enter your email',
-                      prefixIcon: const Icon(Icons.email_outlined, size: 22),
-                      suffixIcon: _emailError != null
-                          ? const Icon(Icons.error_outline,
-                              color: AppTheme.errorRed, size: 20)
-                          : null,
-                    ),
-                    validator: _validateEmail,
+                TextFormField(
+                  controller: _emailController,
+                  autovalidateMode: AutovalidateMode.onUserInteraction,
+                  style: Theme.of(context).textTheme.bodyLarge,
+                  decoration: const InputDecoration(
+                    hintText: 'Enter your email',
+                    prefixIcon: Icon(Icons.email_outlined, size: 22),
                   ),
+                  validator: _validateEmail,
                 ),
 
                 const SizedBox(height: 24),
@@ -272,29 +262,27 @@ class _LoginScreenState extends State<LoginScreen> {
                 // Password Field
                 _buildFieldLabel('Password'),
                 const SizedBox(height: 10),
-                _buildInputContainer(
-                  child: TextFormField(
-                    controller: _passwordController,
-                    autovalidateMode: AutovalidateMode.onUserInteraction,
-                    obscureText: !_isPasswordVisible,
-                    style: Theme.of(context).textTheme.bodyLarge,
-                    decoration: InputDecoration(
-                      hintText: 'Enter your password',
-                      prefixIcon: const Icon(Icons.lock_outline, size: 22),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _isPasswordVisible
-                              ? Icons.visibility_off_outlined
-                              : Icons.visibility_outlined,
-                          size: 20,
-                          color: Colors.black38,
-                        ),
-                        onPressed: () => setState(
-                            () => _isPasswordVisible = !_isPasswordVisible),
+                TextFormField(
+                  controller: _passwordController,
+                  autovalidateMode: AutovalidateMode.onUserInteraction,
+                  obscureText: !_isPasswordVisible,
+                  style: Theme.of(context).textTheme.bodyLarge,
+                  decoration: InputDecoration(
+                    hintText: 'Enter your password',
+                    prefixIcon: const Icon(Icons.lock_outline, size: 22),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _isPasswordVisible
+                            ? Icons.visibility_off_outlined
+                            : Icons.visibility_outlined,
+                        size: 20,
+                        color: Colors.black38,
                       ),
+                      onPressed: () => setState(
+                          () => _isPasswordVisible = !_isPasswordVisible),
                     ),
-                    validator: _validatePassword,
                   ),
+                  validator: _validatePassword,
                 ),
 
                 // Forgot Password
@@ -431,17 +419,6 @@ class _LoginScreenState extends State<LoginScreen> {
         fontWeight: FontWeight.w700,
         color: AppTheme.midnightCharcoal.withValues(alpha: 0.7),
       ),
-    );
-  }
-
-  Widget _buildInputContainer({required Widget child}) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppTheme.surfaceWhite,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: AppTheme.softShadow,
-      ),
-      child: child,
     );
   }
 }

@@ -323,14 +323,17 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             silhouetteIcon: Icons.priority_high_rounded,
           ),
         ),
-        _buildStatCard(
-          '54ms',
-          'Avg Latency',
-          Icons.dns_outlined,
-          null,
-          iconColor: const Color(0xFF4C84FF),
-          iconBgColor: const Color(0xFFEFF4FF),
-          silhouetteIcon: Icons.storage_rounded,
+        StreamBuilder<int>(
+          stream: _dbService.getSystemLatencyStream(),
+          builder: (context, snapshot) => _buildStatCard(
+            '${snapshot.data ?? 0}ms',
+            'Avg Latency',
+            Icons.dns_outlined,
+            null,
+            iconColor: const Color(0xFF4C84FF),
+            iconBgColor: const Color(0xFFEFF4FF),
+            silhouetteIcon: Icons.storage_rounded,
+          ),
         ),
       ],
     );
@@ -505,19 +508,37 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             },
           ),
           const SizedBox(height: 24),
-          _buildMiniBarChart(),
+          StreamBuilder<List<double>>(
+            stream:
+                _dbService.getAggregateHistoricalConsumptionStream('METER001'),
+            builder: (context, snapshot) {
+              final readings =
+                  snapshot.data ?? [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0];
+              return _buildMiniBarChart(readings);
+            },
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildMiniBarChart() {
-    final days = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
-    final values = [0.25, 0.4, 0.3, 0.5, 0.9, 0.45, 0.35];
+  Widget _buildMiniBarChart(List<double> values) {
+    final days = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+    // We expect 7 values, if fewer, we pad with zeros or just take what we have
+    // If we have more, we take the last 7
+    final displayValues =
+        values.length >= 7 ? values.sublist(values.length - 7) : values;
+
+    // Normalize values for chart height (max height 120)
+    double maxVal = displayValues.isEmpty
+        ? 1.0
+        : displayValues.reduce((a, b) => a > b ? a : b);
+    if (maxVal == 0) maxVal = 1.0;
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: List.generate(7, (index) {
+      children: List.generate(displayValues.length, (index) {
+        final double heightFactor = displayValues[index] / maxVal;
         return Column(
           children: [
             Container(
@@ -531,10 +552,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 alignment: Alignment.bottomCenter,
                 children: [
                   FractionallySizedBox(
-                    heightFactor: values[index],
+                    heightFactor: heightFactor.clamp(0.0, 1.0),
                     child: Container(
                       decoration: BoxDecoration(
-                        color: index == 4
+                        color: index == displayValues.length - 1
                             ? const Color(0xFFF0F210)
                             : const Color(0xFFF0F210).withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(20),
@@ -546,11 +567,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              days[index],
+              days[index % 7],
               style: GoogleFonts.inter(
                 fontSize: 10,
-                fontWeight: index == 4 ? FontWeight.w800 : FontWeight.w500,
-                color: index == 4 ? Colors.black : Colors.black26,
+                fontWeight: index == displayValues.length - 1
+                    ? FontWeight.w800
+                    : FontWeight.w500,
+                color: index == displayValues.length - 1
+                    ? Colors.black
+                    : Colors.black26,
               ),
             ),
           ],
@@ -572,12 +597,22 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           ),
         ),
         const SizedBox(height: 16),
-        _buildServiceItem(
-            'Meter Synchronization', 'Operational', const Color(0xFF2EBD59)),
+        StreamBuilder<int>(
+          stream: _dbService.getSystemLatencyStream(),
+          builder: (context, snapshot) {
+            final latency = snapshot.data ?? 0;
+            final String status =
+                latency > 500 ? 'Latency High' : 'Operational';
+            final Color color = latency > 500
+                ? const Color(0xFFFF8A00)
+                : const Color(0xFF2EBD59);
+            return _buildServiceItem('Meter Synchronization', status, color);
+          },
+        ),
         _buildServiceItem(
             'User Authentication', 'Operational', const Color(0xFF2EBD59)),
         _buildServiceItem(
-            'Notification Delivery', 'Delayed', const Color(0xFFFF8A00)),
+            'Notification Delivery', 'Operational', const Color(0xFF2EBD59)),
       ],
     );
   }
