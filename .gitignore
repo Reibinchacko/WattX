@@ -1,0 +1,9 @@
+/.dart_tool/
+/.flutter-plugins
+/.flutter-plugins-dependencies
+/build/
+/android/.gradle/
+/hs_err_pid*.log
+/.idea/
+.DS_Store
+Thumbs.db
