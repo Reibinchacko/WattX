@@ -203,7 +203,7 @@ class DatabaseService {
   // --- Initial Data Seeding ---
 
   Future<void> seedInitialData(String uid, String email, String name) async {
-    final String meterId = 'METER001';
+    const String meterId = 'METER001';
 
     try {
       await _db.ref('Users/$uid').set({

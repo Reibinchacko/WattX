@@ -9,9 +9,7 @@ plugins {
 android {
     namespace = "com.example.energy_monitor"
     compileSdk = flutter.compileSdkVersion
-    // Explicitly pin a known-good installed NDK (has source.properties)
-    ndkVersion = "27.0.12077973"
-    
+    ndkVersion = flutter.ndkVersion
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -33,10 +31,7 @@ android {
         versionName = flutter.versionName
         multiDexEnabled = true
     }
-    dependencies {
-        implementation(platform("com.google.firebase:firebase-bom:34.7.0"))
-        implementation("androidx.multidex:multidex:2.0.1")
-    }
+
     buildTypes {
         release {
             // TODO: Add your own signing config for the release build.

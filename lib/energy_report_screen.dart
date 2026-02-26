@@ -232,7 +232,7 @@ class _EnergyReportContentState extends State<EnergyReportContent> {
                       style: GoogleFonts.inter(
                         fontSize: 11,
                         fontWeight: FontWeight.w800,
-                        color: Color(0xFF2EBD59),
+                        color: const Color(0xFF2EBD59),
                       ),
                     ),
                   ],
@@ -257,7 +257,7 @@ class _EnergyReportContentState extends State<EnergyReportContent> {
 
                 return LineChart(
                   LineChartData(
-                    gridData: FlGridData(show: false),
+                    gridData: const FlGridData(show: false),
                     titlesData: FlTitlesData(
                       bottomTitles: AxisTitles(
                         sideTitles: SideTitles(
@@ -267,8 +267,9 @@ class _EnergyReportContentState extends State<EnergyReportContent> {
                               ? (readings.length / 5).floorToDouble()
                               : 1,
                           getTitlesWidget: (value, meta) {
-                            if (value.toInt() >= readings.length)
+                            if (value.toInt() >= readings.length) {
                               return const SizedBox();
+                            }
                             final time = readings[value.toInt()].timestamp;
                             return Padding(
                               padding: const EdgeInsets.only(top: 8.0),
@@ -283,12 +284,12 @@ class _EnergyReportContentState extends State<EnergyReportContent> {
                           },
                         ),
                       ),
-                      leftTitles:
-                          AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                      topTitles:
-                          AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                      rightTitles:
-                          AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                      leftTitles: const AxisTitles(
+                          sideTitles: SideTitles(showTitles: false)),
+                      topTitles: const AxisTitles(
+                          sideTitles: SideTitles(showTitles: false)),
+                      rightTitles: const AxisTitles(
+                          sideTitles: SideTitles(showTitles: false)),
                     ),
                     borderData: FlBorderData(show: false),
                     lineBarsData: [

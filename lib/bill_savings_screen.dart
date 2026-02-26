@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:razorpay_flutter/razorpay_flutter.dart';
 import 'notifications_screen.dart';
 import 'theme/app_theme.dart';
 
@@ -11,6 +12,173 @@ class BillSavingsScreen extends StatefulWidget {
 }
 
 class _BillSavingsScreenState extends State<BillSavingsScreen> {
+  late Razorpay _razorpay;
+  bool _isProcessing = false;
+
+  // Bill amount in paise (₹842.50 = 84250 paise)
+  static const int _billAmountPaise = 84250;
+  static const String _billDisplay = '₹842.50';
+
+  // ─── Razorpay TEST KEY ─────────────────────────────────────────────────────
+  // Replace with your actual key from https://dashboard.razorpay.com
+  static const String _razorpayTestKey = 'rzp_test_SKniOJcdMAcaIL';
+  // ──────────────────────────────────────────────────────────────────────────
+
+  @override
+  void initState() {
+    super.initState();
+    _razorpay = Razorpay();
+    _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _onPaymentSuccess);
+    _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _onPaymentError);
+    _razorpay.on(Razorpay.EVENT_EXTERNAL_WALLET, _onExternalWallet);
+  }
+
+  @override
+  void dispose() {
+    _razorpay.clear();
+    super.dispose();
+  }
+
+  void _openRazorpay() {
+    final options = {
+      'key': _razorpayTestKey,
+      'amount': _billAmountPaise, // in paise
+      'name': 'WattX Energy',
+      'description': 'Electricity Bill – October 2023',
+      'prefill': {
+        'contact': '9999999999',
+        'email': 'user@wattx.in',
+      },
+      'theme': {
+        'color': '#C9A84C', // AppTheme gold
+      },
+      'notes': {
+        'meter_id': 'METER001',
+        'bill_month': 'October 2023',
+      },
+    };
+
+    try {
+      setState(() => _isProcessing = true);
+      _razorpay.open(options);
+    } catch (e) {
+      setState(() => _isProcessing = false);
+      _showResultDialog(
+        success: false,
+        title: 'Could not open payment',
+        message: e.toString(),
+      );
+    }
+  }
+
+  void _onPaymentSuccess(PaymentSuccessResponse response) {
+    setState(() => _isProcessing = false);
+    _showResultDialog(
+      success: true,
+      title: 'Payment Successful! 🎉',
+      message:
+          'Your electricity bill has been paid.\n\nPayment ID: ${response.paymentId}',
+    );
+  }
+
+  void _onPaymentError(PaymentFailureResponse response) {
+    setState(() => _isProcessing = false);
+    _showResultDialog(
+      success: false,
+      title: 'Payment Failed',
+      message: response.message ?? 'Something went wrong. Please try again.',
+    );
+  }
+
+  void _onExternalWallet(ExternalWalletResponse response) {
+    setState(() => _isProcessing = false);
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('External wallet selected: ${response.walletName}'),
+          backgroundColor: Colors.blueAccent,
+          behavior: SnackBarBehavior.floating,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
+      );
+    }
+  }
+
+  void _showResultDialog({
+    required bool success,
+    required String title,
+    required String message,
+  }) {
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        backgroundColor: AppTheme.surfaceWhite,
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 8),
+            Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: success
+                    ? Colors.green.withValues(alpha: 0.12)
+                    : AppTheme.errorRed.withValues(alpha: 0.12),
+              ),
+              child: Icon(
+                success ? Icons.check_circle_rounded : Icons.cancel_rounded,
+                size: 40,
+                color: success ? Colors.green : AppTheme.errorRed,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.inter(
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+                color: AppTheme.midnightCharcoal,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                color: Colors.black54,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor:
+                      success ? Colors.green : AppTheme.primaryGold,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14)),
+                ),
+                child: Text(
+                  success ? 'Done' : 'Try Again',
+                  style: GoogleFonts.inter(fontWeight: FontWeight.w700),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -145,7 +313,7 @@ class _BillSavingsScreenState extends State<BillSavingsScreen> {
           ),
           const SizedBox(height: 24),
           Text(
-            '₹842.50',
+            _billDisplay,
             style: GoogleFonts.inter(
               fontSize: 40,
               fontWeight: FontWeight.w900,
@@ -172,23 +340,36 @@ class _BillSavingsScreenState extends State<BillSavingsScreen> {
                   ],
                 ),
               ),
+              // ── PAY NOW button ─────────────────────────────────────
               SizedBox(
                 height: 48,
                 child: ElevatedButton(
-                  onPressed: () {},
+                  onPressed: _isProcessing ? null : _openRazorpay,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primaryGold,
                     foregroundColor: AppTheme.midnightCharcoal,
+                    disabledBackgroundColor:
+                        AppTheme.primaryGold.withValues(alpha: 0.5),
                     elevation: 0,
                     padding: const EdgeInsets.symmetric(horizontal: 24),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16)),
                   ),
-                  child: Text('PAY NOW',
-                      style: GoogleFonts.inter(
-                          fontWeight: FontWeight.w900, fontSize: 13)),
+                  child: _isProcessing
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.5,
+                            color: AppTheme.midnightCharcoal,
+                          ),
+                        )
+                      : Text('PAY NOW',
+                          style: GoogleFonts.inter(
+                              fontWeight: FontWeight.w900, fontSize: 13)),
                 ),
               ),
+              // ──────────────────────────────────────────────────────
             ],
           ),
         ],

@@ -299,8 +299,9 @@ class _KsebOfficerDashboardScreenState
                           'Fri',
                           'Sat'
                         ];
-                        if (value < 0 || value >= days.length)
+                        if (value < 0 || value >= days.length) {
                           return const SizedBox();
+                        }
                         return Padding(
                           padding: const EdgeInsets.only(top: 8.0),
                           child: Text(

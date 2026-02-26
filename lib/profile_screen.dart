@@ -514,16 +514,14 @@ class _ProfileContentState extends State<ProfileContent> {
                   await _databaseService.updateUserProfile(updatedUser);
                 }
                 await FirebaseAuth.instance.currentUser?.reload();
-                if (mounted) {
-                  setState(() {});
-                  Navigator.pop(context);
-                }
+                if (!context.mounted) return;
+                setState(() {});
+                Navigator.pop(context);
               } catch (e) {
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error: ${e.toString()}')),
-                  );
-                }
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Error: ${e.toString()}')),
+                );
               }
             },
             child: Text(
@@ -589,18 +587,16 @@ class _ProfileContentState extends State<ProfileContent> {
                 );
                 await user.reauthenticateWithCredential(credential);
                 await user.verifyBeforeUpdateEmail(newEmail);
-                if (mounted) {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Verification email sent')),
-                  );
-                }
+                if (!context.mounted) return;
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Verification email sent')),
+                );
               } catch (e) {
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(e.toString())),
-                  );
-                }
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(e.toString())),
+                );
               }
             },
             child: Text('Update',
@@ -660,18 +656,16 @@ class _ProfileContentState extends State<ProfileContent> {
                 );
                 await user.reauthenticateWithCredential(credential);
                 await user.updatePassword(newPassword);
-                if (mounted) {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Password updated')),
-                  );
-                }
+                if (!context.mounted) return;
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Password updated')),
+                );
               } catch (e) {
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(e.toString())),
-                  );
-                }
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(e.toString())),
+                );
               }
             },
             child: Text('Update',

@@ -356,7 +356,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: iconBgColor ?? Colors.black.withOpacity(0.04),
+                          color: iconBgColor ??
+                              Colors.black.withValues(alpha: 0.04),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Icon(icon,
