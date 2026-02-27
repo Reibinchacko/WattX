@@ -1,0 +1,106 @@
+============================================================
+        WattX - IoT Expansion Ideas & New Devices
+============================================================
+
+🌡️ NEW SENSORS TO ADD
+-----------------------
+[ ] DHT11/DHT22      - Temperature + Humidity per room   | Topic: esp32/temp/room1
+[ ] PIR Motion       - Detect if someone is in the room  | Topic: esp32/motion/living
+[ ] LDR              - Detect ambient light level         | Topic: esp32/ldr/bedroom
+[ ] ACS712 Current   - Per-device amperage monitoring     | Topic: esp32/current/ac
+[ ] MQ2 Gas/Smoke    - Fire & gas leak detection          | Topic: esp32/gas/kitchen
+[ ] Soil Moisture    - Smart garden/plant care            | Topic: esp32/soil/plant1
+[ ] Ultrasonic HC-SR - Water tank level monitoring        | Topic: esp32/water/tank
+[ ] Reed Switch      - Detect door/window open/close      | Topic: esp32/door/main
+[ ] IR Blaster       - Control TV/AC remotely via app     | Topic: esp32/ir/command
+
+
+🌬️ AC / CLIMATE CONTROL
+--------------------------
+[ ] Auto fan speed based on DHT22 temperature
+[ ] Smart AC controller (ON if temp > 28°C, OFF < 24°C)
+[ ] Humidity alert ("Living Room at 85%, turn on dehumidifier")
+[ ] Comfort score card on dashboard (temp + humidity combined)
+
+
+💡 SMART LIGHTING
+------------------
+[ ] Auto-lights via PIR motion sensor (enter room → lights ON)
+[ ] Auto-off when room empty (no motion for 5 mins → lights OFF)
+[ ] Day/Night auto mode via LDR (darkness detected → lights ON)
+[ ] Sunrise/Sunset schedule (brightness based on time of day)
+
+
+🔐 SECURITY FEATURES
+---------------------
+[ ] Door open alert (reed switch → notification "Main door opened!")
+[ ] Motion alert at night (PIR fires 11PM–6AM → critical alert)
+[ ] Security camera trigger (motion detected → start recording)
+[ ] Intruder log (timeline of all motion events in Firebase)
+
+
+🚿 WATER MANAGEMENT
+--------------------
+[ ] Tank level gauge on dashboard (ultrasonic sensor → % full)
+[ ] Low water alert ("Tank below 20%, refill soon")
+[ ] Auto pump control (tank < 30% → Motor 2 turns ON automatically)
+[ ] Daily water usage tracker (pump runtime → litres estimate)
+
+
+🔥 SAFETY & GAS
+----------------
+[ ] Gas leak alert (MQ2 → CRITICAL alert + auto turn off all devices)
+[ ] Fire drill mode (all lights flash, alert sent to all users)
+[ ] Kitchen auto ventilation (gas detected → exhaust fan ON)
+
+
+📊 APP FEATURES WITH NEW DATA
+-------------------------------
+[ ] Live room cards  (Temp | Humidity | Light | Motion per room)
+[ ] Solar panel monitoring (solar vs grid usage donut chart)
+[ ] Net metering tracker (how much power exported to grid)
+[ ] Floor plan view (visual house map with device status overlay)
+[ ] Device health monitor (ESP32 uptime, WiFi signal, last seen)
+[ ] Guest mode (limited control access for visitors)
+[ ] Family sharing (multiple users control same home)
+
+
+🤖 SMART AUTOMATION RULES (IF-THEN)
+-------------------------------------
+[ ] IF motion detected AND after 9PM → turn on bedroom light
+[ ] IF temperature > 30°C → turn Fan 1 ON
+[ ] IF no motion for 30 mins → turn all lights OFF
+[ ] IF gas detected → turn OFF all devices + alert
+[ ] IF tank < 30% → turn pump ON automatically
+[ ] Smart Energy Saver Mode (one tap applies all eco rules)
+
+
+🔌 NEW OUTPUT DEVICES / ACTUATORS
+-----------------------------------
+[ ] Servo motor     - Smart door lock / auto-close curtains
+[ ] RGB LED Strip   - Mood lighting controlled from app
+[ ] Buzzer/Alarm    - Sound alert when threshold exceeded
+[ ] Solenoid Valve  - Auto water shutoff (gas/flood detection)
+[ ] OLED/TFT Display- Wall-mounted ESP32 panel showing readings
+
+
+📡 MQTT / BACKEND POWER-UPS
+-----------------------------
+[ ] MQTT QoS levels (guarantee delivery for critical commands)
+[ ] Retained messages (ESP32 gets last state on reconnect)
+[ ] Multiple ESP32 nodes (one per room, all on same HiveMQ broker)
+[ ] ESP32 edge processing (on-device math before sending to cloud)
+[ ] Historical data graphs (every reading stored → weekly/monthly charts)
+
+
+⚡ QUICKEST WINS (Start Here!)
+--------------------------------
+[ ] 1. Temperature widget on dashboard from DHT22 (huge visual impact)
+[ ] 2. Motion-triggered auto lights (works with existing LED control)
+[ ] 3. Door open notification (reed switch = cheapest sensor possible)
+[ ] 4. Water tank level gauge (ultrasonic + gauge widget in app)
+[ ] 5. Room cards (visual upgrade, just add more sensors per room)
+
+============================================================
+  Tick off [ ] as you implement each feature!
+============================================================

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'dart:async';
 import 'analytics_screen.dart';
 import 'notifications_screen.dart';
 import 'bill_savings_screen.dart';
@@ -7,8 +9,10 @@ import 'profile_screen.dart';
 import 'control_screen.dart';
 import 'theme/app_theme.dart';
 import 'services/database_service.dart';
+import 'services/offline_cache_service.dart';
 import 'models/reading_model.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -22,15 +26,135 @@ class _DashboardScreenState extends State<DashboardScreen> {
   late PageController _pageController;
   final DatabaseService _databaseService = DatabaseService();
 
+  // Quick-control device states (mirrors ControlScreen Firebase path)
+  final DatabaseReference _controlRef =
+      FirebaseDatabase.instance.ref('Devices/METER001/controls');
+
+  final List<Map<String, dynamic>> _quickDevices = [
+    {
+      'key': 'LED 1',
+      'label': 'Light 1',
+      'icon': Icons.lightbulb_rounded,
+      'color': const Color(0xFFFFD700)
+    },
+    {
+      'key': 'LED 2',
+      'label': 'Light 2',
+      'icon': Icons.lightbulb_rounded,
+      'color': const Color(0xFFFFD700)
+    },
+    {
+      'key': 'LED 3',
+      'label': 'Light 3',
+      'icon': Icons.lightbulb_rounded,
+      'color': const Color(0xFFFFD700)
+    },
+    {
+      'key': 'Motor 1',
+      'label': 'Fan 1',
+      'icon': Icons.wind_power_rounded,
+      'color': Colors.blueAccent
+    },
+    {
+      'key': 'Motor 2',
+      'label': 'Fan 2',
+      'icon': Icons.wind_power_rounded,
+      'color': Colors.blueAccent
+    },
+  ];
+
+  final Map<String, bool> _deviceStates = {
+    'LED 1': false,
+    'LED 2': false,
+    'LED 3': false,
+    'Motor 1': false,
+    'Motor 2': false,
+  };
+
+  late DatabaseReference _deviceListener;
+
+  // ── Connectivity & MQTT status ─────────────────────────────────────────────
+  bool _isOnline = true;
+  bool _mqttConnected = false;
+  String _cacheAge = '';
+  StreamSubscription<DatabaseEvent>? _connSub;
+  StreamSubscription<DatabaseEvent>? _mqttStatusSub;
+
+  // Cached reading shown when offline
+  ReadingModel? _cachedReading;
+
   @override
   void initState() {
     super.initState();
     _pageController = PageController(initialPage: _selectedIndex);
+    _listenToDevices();
+    _listenToConnectivity();
+    _listenToMqttStatus();
+    _loadCachedReading();
+  }
+
+  Future<void> _loadCachedReading() async {
+    _cachedReading = await OfflineCacheService.loadReading();
+    _cacheAge = await OfflineCacheService.cacheAge();
+    if (mounted) setState(() {});
+  }
+
+  void _listenToConnectivity() {
+    _connSub = FirebaseDatabase.instance
+        .ref('.info/connected')
+        .onValue
+        .listen((event) {
+      final connected = event.snapshot.value as bool? ?? false;
+      if (mounted) setState(() => _isOnline = connected);
+      if (!connected) {
+        // Refresh displayed cache age when we go offline
+        OfflineCacheService.cacheAge().then((age) {
+          if (mounted) setState(() => _cacheAge = age);
+        });
+      }
+    });
+  }
+
+  void _listenToMqttStatus() {
+    _mqttStatusSub = FirebaseDatabase.instance
+        .ref('System/mqtt_status/connected')
+        .onValue
+        .listen((event) {
+      final connected = event.snapshot.value as bool? ?? false;
+      if (mounted) setState(() => _mqttConnected = connected);
+    });
+  }
+
+  void _listenToDevices() {
+    _deviceListener = _controlRef;
+    _deviceListener.onValue.listen((event) {
+      if (!mounted) return;
+      final data = event.snapshot.value as Map<dynamic, dynamic>?;
+      setState(() {
+        if (data != null) {
+          for (final key in _deviceStates.keys) {
+            final deviceData = data[key];
+            if (deviceData is Map && deviceData.containsKey('isOn')) {
+              _deviceStates[key] = deviceData['isOn'] == true;
+            }
+          }
+        }
+      });
+    });
+  }
+
+  Future<void> _quickToggle(String key) async {
+    final newVal = !(_deviceStates[key] ?? false);
+    HapticFeedback.lightImpact();
+    setState(() => _deviceStates[key] = newVal);
+    await _controlRef.child(key).update({'isOn': newVal});
   }
 
   @override
   void dispose() {
     _pageController.dispose();
+    _connSub?.cancel();
+    _mqttStatusSub?.cancel();
     super.dispose();
   }
 
@@ -146,11 +270,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return StreamBuilder<ReadingModel?>(
       stream: _databaseService.getLiveReading(meterId),
       builder: (context, snapshot) {
+        // Use live data when online, fall back to cache when offline
         ReadingModel? reading = snapshot.data;
+        if (reading != null) {
+          // Cache fresh data in background
+          OfflineCacheService.saveReading(reading);
+          _cachedReading = reading;
+        }
+        final displayReading = reading ?? _cachedReading;
+        final isShowingCache = reading == null && _cachedReading != null;
 
         return Stack(
           children: [
-            // Dark Header Section (More Compact - 0.22 instead of 0.35)
+            // Dark Header
             Positioned(
               top: 0,
               left: 0,
@@ -204,16 +336,59 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 ],
                               ),
                             ),
+                            // ── MQTT status dot ──────────────────────────
+                            Padding(
+                              padding: const EdgeInsets.only(right: 10),
+                              child: Tooltip(
+                                message: _mqttConnected
+                                    ? 'MQTT Connected'
+                                    : 'MQTT Disconnected',
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    AnimatedContainer(
+                                      duration:
+                                          const Duration(milliseconds: 400),
+                                      width: 8,
+                                      height: 8,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: _mqttConnected
+                                            ? Colors.greenAccent
+                                            : Colors.redAccent,
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: (_mqttConnected
+                                                    ? Colors.green
+                                                    : Colors.red)
+                                                .withValues(alpha: 0.6),
+                                            blurRadius: 6,
+                                            spreadRadius: 1,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(width: 5),
+                                    Text(
+                                      'MQTT',
+                                      style: GoogleFonts.inter(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w700,
+                                        color: Colors.white54,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
                             _buildCircleButton(
                               icon: Icons.notifications_none_rounded,
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) =>
-                                          const NotificationsScreen()),
-                                );
-                              },
+                              onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) =>
+                                        const NotificationsScreen()),
+                              ),
                             ),
                           ],
                         ),
@@ -224,20 +399,32 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
 
-            // Content Section (Moved Up)
+            // Content Section
             Positioned.fill(
               top: MediaQuery.of(context).size.height * 0.12,
               child: SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
                 child: Column(
                   children: [
+                    // ── Offline / cached-data banner ───────────────────
+                    if (!_isOnline || isShowingCache)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: _buildOfflineBanner(isShowingCache),
+                      ),
+
                     // Main Power Card
-                    _buildMainPowerCard(reading),
+                    _buildMainPowerCard(displayReading),
+
+                    const SizedBox(height: 14),
+
+                    // Quick Device Controls
+                    _buildQuickDeviceStrip(),
 
                     const SizedBox(height: 20),
 
-                    // Metrics Grid (More Compact Spacing)
-                    _buildMetricsGrid(reading),
+                    // Metrics Grid
+                    _buildMetricsGrid(displayReading),
 
                     const SizedBox(height: 20),
 
@@ -250,6 +437,63 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ],
         );
       },
+    );
+  }
+
+  Widget _buildOfflineBanner(bool isCache) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 350),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: isCache
+            ? Colors.orange.withValues(alpha: 0.12)
+            : Colors.red.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: isCache
+              ? Colors.orange.withValues(alpha: 0.4)
+              : Colors.red.withValues(alpha: 0.35),
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            isCache ? Icons.cloud_off_rounded : Icons.wifi_off_rounded,
+            size: 18,
+            color: isCache ? Colors.orange : Colors.red,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              isCache
+                  ? 'Offline — showing cached data from $_cacheAge'
+                  : 'No internet connection',
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: isCache ? Colors.orange : Colors.red,
+              ),
+            ),
+          ),
+          if (isCache)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: Colors.orange.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                'CACHED',
+                style: GoogleFonts.inter(
+                  fontSize: 9,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.orange,
+                  letterSpacing: 0.8,
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 
@@ -369,6 +613,120 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildQuickDeviceStrip() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 10),
+          child: Text(
+            'QUICK CONTROLS',
+            style: GoogleFonts.inter(
+              fontSize: 10,
+              fontWeight: FontWeight.w800,
+              color: isDark
+                  ? Colors.white38
+                  : AppTheme.midnightCharcoal.withValues(alpha: 0.45),
+              letterSpacing: 1.2,
+            ),
+          ),
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: _quickDevices.map((device) {
+            final key = device['key'] as String;
+            final label = device['label'] as String;
+            final icon = device['icon'] as IconData;
+            final color = device['color'] as Color;
+            final isOn = _deviceStates[key] ?? false;
+
+            return GestureDetector(
+              onTap: () => _quickToggle(key),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 280),
+                curve: Curves.easeOutCubic,
+                width: 60,
+                padding:
+                    const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                decoration: BoxDecoration(
+                  color: isOn
+                      ? color.withValues(alpha: isDark ? 0.22 : 0.14)
+                      : (isDark
+                          ? Colors.white.withValues(alpha: 0.05)
+                          : AppTheme.surfaceWhite),
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(
+                    color: isOn
+                        ? color.withValues(alpha: 0.55)
+                        : Colors.transparent,
+                    width: 1.5,
+                  ),
+                  boxShadow: isOn
+                      ? [
+                          BoxShadow(
+                            color: color.withValues(alpha: 0.35),
+                            blurRadius: 14,
+                            spreadRadius: 1,
+                          )
+                        ]
+                      : AppTheme.softShadow,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 280),
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: isOn
+                            ? color.withValues(alpha: 0.22)
+                            : color.withValues(alpha: 0.08),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        icon,
+                        color: isOn ? color : color.withValues(alpha: 0.4),
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      label,
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.inter(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w700,
+                        color: isOn
+                            ? (isDark
+                                ? Colors.white
+                                : AppTheme.midnightCharcoal)
+                            : (isDark
+                                ? Colors.white38
+                                : AppTheme.midnightCharcoal
+                                    .withValues(alpha: 0.4)),
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      width: 6,
+                      height: 6,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: isOn ? Colors.green : Colors.transparent,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ],
     );
   }
 

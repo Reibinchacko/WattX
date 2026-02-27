@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'splash_screen.dart';
 import 'theme/app_theme.dart';
 import 'theme/theme_provider.dart';
+import 'services/alert_service.dart';
 
 final GoogleSignIn googleSignIn = GoogleSignIn(
   clientId: kIsWeb ? "dummy-client-id.apps.googleusercontent.com" : null,
@@ -15,6 +16,7 @@ final GoogleSignIn googleSignIn = GoogleSignIn(
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+  AlertService().start(); // 🔔 Start background monitoring
   runApp(
     ChangeNotifierProvider(
       create: (_) => ThemeProvider(),

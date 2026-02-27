@@ -1,0 +1,62 @@
+============================================================
+           WattX - Feature Suggestions List
+============================================================
+
+🏠 DASHBOARD ENHANCEMENTS
+--------------------------
+[ ] Room-wise power breakdown (Living Room, Bedroom, Kitchen)
+[ ] Mini live sparkline chart (last 10 mins power usage)
+[ ] Weather + power tip card
+[ ] Active devices count badge ("3 devices ON")
+
+📊 ANALYTICS UPGRADES
+----------------------
+[ ] Weekly/Monthly comparison bar chart
+[ ] Appliance-wise usage pie chart
+[ ] Cost estimator (kWh to ₹ based on KSEB tariff slabs)
+[ ] Peak hours heatmap (calendar-style grid)
+
+🤖 SMART AUTOMATION
+--------------------
+[ ] Schedules (auto-turn off lights at 10 PM)
+[ ] Auto-off on idle (device ON for X hours → notify)
+[ ] Scenes (Movie Mode, Sleep Mode, etc.)
+[ ] Voice command shortcut (Google Assistant)
+
+🔔 ALERTS & NOTIFICATIONS
+--------------------------
+[ ] Overage alert (power > threshold, e.g. > 3 kW)
+[ ] Bill milestone alerts ("You've crossed ₹500 this month")
+[ ] Device left ON alert ("Fan 1 has been ON for 6 hours")
+[ ] Unusual activity detection (high power at odd hours)
+
+💡 CONTROL SCREEN EXTRAS
+--------------------------
+[ ] Brightness slider for dimmable LEDs (PWM)
+[ ] Fan speed control slider (1–5 speeds)
+[ ] "All OFF" button (turn everything off in one tap)
+[ ] Last toggled timestamp ("Turned on 2 hrs ago")
+
+🧾 BILLING SCREEN IDEAS
+------------------------
+[ ] KSEB slab auto-calculator (units → bill amount)
+[ ] Bill split by device ("AC costs ₹320 this month")
+[ ] Savings tracker ("You saved ₹150 by following tips")
+[ ] Pay bill directly (Razorpay/GPay integration)
+
+👤 PROFILE & SETTINGS
+-----------------------
+[ ] Dark/Light mode toggle
+[ ] Monthly kWh target setting (custom goal)
+[ ] Export monthly report as PDF
+[ ] Multiple meters support (manage more than one METER ID)
+
+🔧 TECHNICAL / BACKEND
+------------------------
+[ ] Offline mode with local data cache
+[ ] MQTT reconnect status indicator on dashboard
+[ ] OTA device firmware update trigger via MQTT
+
+============================================================
+  Tick off [ ] as you implement each feature!
+============================================================
