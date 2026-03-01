@@ -21,7 +21,9 @@ class _ScheduleEntry {
 }
 
 class SchedulesScreen extends StatefulWidget {
-  const SchedulesScreen({super.key});
+  /// Optional: pre-select a device when opened via long-press.
+  final String? initialDeviceKey;
+  const SchedulesScreen({super.key, this.initialDeviceKey});
 
   @override
   State<SchedulesScreen> createState() => _SchedulesScreenState();
@@ -63,13 +65,21 @@ class _SchedulesScreenState extends State<SchedulesScreen> {
     },
   ];
 
-  String? _selectedKey;
+  late String? _selectedKey;
   TimeOfDay _selectedTime = const TimeOfDay(hour: 22, minute: 0);
+
+  @override
+  void initState() {
+    super.initState();
+    // Pre-select device if opened via long-press from Quick Controls
+    _selectedKey = widget.initialDeviceKey;
+  }
 
   Future<void> _pickTime() async {
     final picked = await showTimePicker(
       context: context,
       initialTime: _selectedTime,
+      initialEntryMode: TimePickerEntryMode.input,
       builder: (ctx, child) => Theme(
         data: ThemeData.dark().copyWith(
           colorScheme: const ColorScheme.dark(primary: AppTheme.primaryGold),

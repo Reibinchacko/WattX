@@ -1,0 +1,111 @@
+================================================
+          WattX - Full Feature List
+================================================
+Version 2.4.0  |  Build 132
+================================================
+
+
+[1] DASHBOARD (HOME)
+--------------------
+- Live Power Card          : Real-time kW reading from Firebase (METER001)
+- Anomaly Banner           : Detects critical / high / efficient usage vs 7-day average
+- Quick Controls           : Toggle Light 1/2/3 & Fan 1/2 directly from home (glassmorphism pills)
+- Metrics Grid             : Live Voltage, Current, Frequency, Power Factor cards
+- Daily Goal Card          : Energy savings progress for the day
+
+
+[2] ANALYTICS
+-------------
+- Usage Line Chart         : Interactive chart with tap tooltips
+- Time Filter              : Day / Week / Month / Year views
+- Bar Breakdown Chart      : Daily/weekly/monthly usage bars
+- Peak Load & Est. Bill    : Quick summary metrics at bottom
+
+
+[3] BILL & SAVINGS
+------------------
+- Bill Card                : Current month bill (Rs. 842.50) with due date
+- Pay Now                  : Integrated Razorpay payment gateway
+- Bill Breakdown           : Usage charges + service fee + taxes itemized
+- Smart Savings Tips       : Phantom power & AC schedule saving suggestions
+
+
+[4] CONTROL CENTER
+------------------
+- Light Controls           : Light 1 (Living Room), Light 2 (Bedroom), Light 3 (Kitchen)
+- Fan Controls             : Fan 1 (Living Room), Fan 2 (Bedroom)
+- Live Device Sync         : Real hardware state via Firebase -> MQTT
+- Active Count Badge       : Shows X/5 ON in header
+- Schedules Button         : Opens the Schedules screen
+
+
+[5] SCHEDULES
+-------------
+- Create Schedule          : Pick device + auto-OFF time via time picker
+- Daily Auto-OFF           : Device turns off automatically at set time
+- View Active Schedules    : List of all schedules with device + time
+- Delete Schedule          : Tap trash icon to remove
+
+
+[6] NOTIFICATIONS
+-----------------
+- Smart Alerts             : Critical / Warning / Resolved / Info types
+- Real-time Stream         : Auto-updates from Firebase
+- Mark as Read             : Tap to dismiss individual notifications
+- Alert Types              : Overage power, bill milestones, idle auto-off, anomaly
+
+
+[7] PROFILE & SETTINGS
+-----------------------
+- Profile Photo            : Google photo or Firebase avatar
+- Change Name              : Edit display name -> synced to Firebase
+- Change Email             : Re-authenticate + verify before updating
+- Change Password          : Secure re-authentication flow
+- Dark Mode Toggle         : Persisted via ThemeProvider
+- Push Notifications       : Toggle switch
+- Share Usage Data         : Privacy toggle
+- Register Complaint       : Submit issues or feedback
+- Log Out                  : Confirmation dialog -> back to Login
+
+
+[8] AUTHENTICATION
+------------------
+- Email/Password Login     : With form validation
+- Google Sign-In           : Always shows account picker
+- Sign Up                  : Name + email + password, seeds Firebase data
+- Forgot Password          : Email reset link via Firebase
+- Role-based Routing       :
+    Admin        -> Admin Dashboard
+    KSEB Officer -> KSEB Officer Dashboard
+    User         -> Home Dashboard
+
+
+[9] ADMIN DASHBOARD
+-------------------
+- View all users
+- Manage meters
+- View KSEB consumer list
+- Assign officers to consumers
+
+
+[10] KSEB OFFICER DASHBOARD
+----------------------------
+- Consumer list
+- Complaints management
+- Service requests
+- Notices
+
+
+================================================
+          TECH STACK
+================================================
+- Flutter (Dart)
+- Firebase Realtime Database
+- Firebase Auth
+- Google Sign-In
+- Razorpay (Payments)
+- MQTT (IoT device sync via mqtt_sync.py)
+- fl_chart (Charts)
+- Google Fonts (Inter)
+- Provider (State management)
+================================================

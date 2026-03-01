@@ -48,8 +48,12 @@ class AlertService {
     _running = false;
     _powerSub?.cancel();
     _controlSub?.cancel();
-    for (final t in _idleTimers.values) t.cancel();
-    for (final t in _scheduleTimers) t.cancel();
+    for (final t in _idleTimers.values) {
+      t.cancel();
+    }
+    for (final t in _scheduleTimers) {
+      t.cancel();
+    }
     _idleTimers.clear();
     _scheduleTimers.clear();
   }
@@ -83,7 +87,7 @@ class AlertService {
   // ── Internal monitoring ───────────────────────────────────────────────────
 
   void _monitorPower() {
-    bool _overageAlertSent = false;
+    bool overageAlertSent = false;
 
     _powerSub = _readingRef.onValue.listen((event) async {
       final data = event.snapshot.value as Map<dynamic, dynamic>?;
@@ -101,8 +105,8 @@ class AlertService {
       }
 
       // Overage alert (debounce: only send once per surge)
-      if (power > overagePowerThresholdKW && !_overageAlertSent) {
-        _overageAlertSent = true;
+      if (power > overagePowerThresholdKW && !overageAlertSent) {
+        overageAlertSent = true;
         await _pushAlert(
           title: '⚡ Power Overage!',
           message:
@@ -111,7 +115,7 @@ class AlertService {
           type: 'critical',
         );
       } else if (power <= overagePowerThresholdKW) {
-        _overageAlertSent = false; // reset so it can fire again
+        overageAlertSent = false; // reset so it can fire again
       }
     });
   }
@@ -133,7 +137,7 @@ class AlertService {
           // Set idle auto-off timer
           _idleTimers[key]?.cancel();
           _idleTimers[key] = Timer(
-            Duration(minutes: idleAutoOffMinutes),
+            const Duration(minutes: idleAutoOffMinutes),
             () => _handleIdleAutoOff(key),
           );
         } else {

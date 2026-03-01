@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
-import 'package:firebase_database/firebase_database.dart';
 import 'login_screen.dart';
 import 'theme/app_theme.dart';
 import 'theme/theme_provider.dart';
@@ -36,7 +35,6 @@ class ProfileContent extends StatefulWidget {
 class _ProfileContentState extends State<ProfileContent> {
   bool _pushNotifications = true;
   bool _shareUsageData = true;
-  bool _otaSending = false;
   final DatabaseService _databaseService = DatabaseService();
 
   @override
@@ -318,153 +316,8 @@ class _ProfileContentState extends State<ProfileContent> {
           showTrailing: true,
           isDark: isDark,
         ),
-        _buildDivider(isDark),
-        // ── OTA Firmware Update ──────────────────────────────────
-        InkWell(
-          borderRadius: BorderRadius.circular(12),
-          onTap: _otaSending ? null : _triggerOtaUpdate,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            child: Row(
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: Colors.teal.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: _otaSending
-                      ? const Padding(
-                          padding: EdgeInsets.all(10),
-                          child: CircularProgressIndicator(
-                              strokeWidth: 2, color: Colors.teal),
-                        )
-                      : const Icon(Icons.system_update_alt_rounded,
-                          size: 20, color: Colors.teal),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'OTA Firmware Update',
-                        style: GoogleFonts.inter(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color:
-                              isDark ? Colors.white : AppTheme.midnightCharcoal,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        _otaSending
-                            ? 'Sending update signal to device…'
-                            : 'Push new firmware to ESP32 via MQTT',
-                        style: GoogleFonts.inter(
-                          fontSize: 13,
-                          color: isDark
-                              ? Colors.white54
-                              : AppTheme.midnightCharcoal
-                                  .withValues(alpha: 0.5),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.teal.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Text(
-                    'OTA',
-                    style: GoogleFonts.inter(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.teal,
-                      letterSpacing: 0.8,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
       ],
     );
-  }
-
-  Future<void> _triggerOtaUpdate() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: Theme.of(ctx).brightness == Brightness.dark
-            ? const Color(0xFF1A1C1E)
-            : AppTheme.surfaceWhite,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: Text('OTA Firmware Update',
-            style: GoogleFonts.inter(fontWeight: FontWeight.w800)),
-        content: Text(
-          'This will send an update signal to the ESP32 device via MQTT. '
-          'The device will restart to apply the new firmware. Continue?',
-          style: GoogleFonts.inter(fontSize: 13),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text('Cancel', style: GoogleFonts.inter(color: Colors.grey)),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text('Update',
-                style: GoogleFonts.inter(
-                    color: Colors.teal, fontWeight: FontWeight.w800)),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed != true) return;
-
-    setState(() => _otaSending = true);
-    try {
-      // Write trigger to Firebase → mqtt_sync.py relays app/ota → 1 to ESP32
-      await FirebaseDatabase.instance
-          .ref('Devices/METER001/ota_trigger')
-          .set({'trigger': true, 'requestedAt': ServerValue.timestamp});
-
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          backgroundColor: Colors.teal,
-          content: Row(
-            children: [
-              const Icon(Icons.check_circle_outline,
-                  color: Colors.white, size: 18),
-              const SizedBox(width: 10),
-              Text(
-                'OTA signal sent! Device is updating…',
-                style: GoogleFonts.inter(
-                    fontWeight: FontWeight.w600, color: Colors.white),
-              ),
-            ],
-          ),
-          duration: const Duration(seconds: 4),
-        ),
-      );
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to send OTA signal: $e')),
-      );
-    } finally {
-      if (mounted) setState(() => _otaSending = false);
-    }
   }
 
   Widget _buildSectionHeader(String title, bool isDark) {

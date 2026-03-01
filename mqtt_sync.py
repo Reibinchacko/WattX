@@ -87,28 +87,12 @@ def publish_control(device, is_on):
         print(f"Published to {TOPIC_MAP[device]}: {payload}")
 
 
-def _set_mqtt_status(connected: bool):
-    """Write MQTT broker connection status to Firebase so the Flutter app
-    can show the green/red status dot on the dashboard."""
-    try:
-        db.reference("System/mqtt_status").update({
-            "connected": connected,
-            "lastSeen": {".sv": "timestamp"},
-            "broker": MQTT_BROKER,
-        })
-        print(f"[STATUS] MQTT status set to connected={connected}")
-    except Exception as e:
-        print(f"[STATUS] Failed to update MQTT status: {e}")
-
-
 def on_connect(client, userdata, flags, rc, properties=None):
     if rc == 0:
         print("Connected to MQTT Broker successfully!")
         client.subscribe("esp32/energy")
-        _set_mqtt_status(True)   # ← tell Flutter we're live
     else:
         print(f"Failed to connect, rc={rc}")
-        _set_mqtt_status(False)
 
 
 # ── Power message handler (overage + bill milestone) ──────────────────────────
@@ -221,29 +205,6 @@ def control_listener(event):
             process_device(device, event.data)
 
 
-def ota_listener(event):
-    """Listen for OTA trigger written by the Flutter app and relay to ESP32."""
-    if event.data is None:
-        return
-
-    data = event.data
-    # Triggered when data is a dict with trigger=True
-    if isinstance(data, dict) and data.get("trigger") is True:
-        print("[OTA] Firmware update requested from app. Publishing to ESP32...")
-        client.publish("app/ota", "1", qos=1)
-        # Reset the trigger so it can be fired again
-        try:
-            db.reference(f"Devices/{METER_ID}/ota_trigger").update({"trigger": False})
-        except Exception as e:
-            print(f"[OTA] Failed to reset trigger: {e}")
-        push_alert(
-            "🔧 OTA Update Triggered",
-            "A firmware update signal was sent to the ESP32 device. "
-            "The device will restart and apply the update.",
-            "info",
-        )
-
-
 # ── Start bridge ───────────────────────────────────────────────────────────────
 print("Connecting to MQTT...")
 try:
@@ -252,7 +213,6 @@ try:
 
     print("Setting up Firebase listener...")
     db.reference(f"Devices/{METER_ID}/controls").listen(control_listener)
-    db.reference(f"Devices/{METER_ID}/ota_trigger").listen(ota_listener)
 
     print(f"\n[ACTIVE] MQTT <-> Firebase Synchronizer running.")
     print(f"  Overage threshold : {OVERAGE_POWER_KW} kW")
@@ -265,11 +225,9 @@ try:
 
 except KeyboardInterrupt:
     print("\nShutting down...")
-    _set_mqtt_status(False)   # ← mark offline before exit
     for t in idle_timers.values():
         t.cancel()
     client.loop_stop()
     client.disconnect()
 except Exception as e:
     print(f"Critical error: {e}")
-    _set_mqtt_status(False)
