@@ -17,15 +17,15 @@ class _ControlScreenState extends State<ControlScreen> {
   final DatabaseReference _controlRef =
       FirebaseDatabase.instance.ref('Devices/METER001/controls');
 
-  // Mutable lists so drag-to-reorder works
-  List<_DeviceConfig> _lights = [
+  // final lists: contents are mutated in-place for drag-to-reorder
+  final List<_DeviceConfig> _lights = [
     const _DeviceConfig(
         key: 'LED 1', label: 'Light 1', location: 'Living Room'),
     const _DeviceConfig(key: 'LED 2', label: 'Light 2', location: 'Bedroom'),
     const _DeviceConfig(key: 'LED 3', label: 'Light 3', location: 'Kitchen'),
   ];
 
-  List<_DeviceConfig> _fans = [
+  final List<_DeviceConfig> _fans = [
     const _DeviceConfig(
         key: 'Motor 1', label: 'Fan 1', location: 'Living Room'),
     const _DeviceConfig(key: 'Motor 2', label: 'Fan 2', location: 'Bedroom'),
