@@ -39,6 +39,12 @@ class _ControlScreenState extends State<ControlScreen> {
     'Motor 2': false,
   };
 
+  // Fan speed: 1–5 (only meaningful for Motor keys)
+  final Map<String, int> _fanSpeeds = {
+    'Motor 1': 1,
+    'Motor 2': 1,
+  };
+
   // Usage time: records when each device was switched ON
   final Map<String, DateTime> _onSince = {};
 
@@ -75,6 +81,14 @@ class _ControlScreenState extends State<ControlScreen> {
               } else if (!newVal) {
                 _onSince.remove(key);
               }
+              // Load fan speed from Firebase
+              if (_fanSpeeds.containsKey(key) &&
+                  deviceData.containsKey('speed')) {
+                final spd = deviceData['speed'];
+                if (spd is int && spd >= 1 && spd <= 5) {
+                  _fanSpeeds[key] = spd;
+                }
+              }
             }
           }
         }
@@ -95,6 +109,12 @@ class _ControlScreenState extends State<ControlScreen> {
       }
     });
     await _controlRef.child(key).update({'isOn': value});
+  }
+
+  Future<void> _setFanSpeed(String key, int speed) async {
+    HapticFeedback.selectionClick();
+    setState(() => _fanSpeeds[key] = speed);
+    await _controlRef.child(key).update({'speed': speed});
   }
 
   /// Turns ALL devices ON or OFF at once.
@@ -191,6 +211,7 @@ class _ControlScreenState extends State<ControlScreen> {
                             icon: Icons.wind_power_rounded,
                             color: Colors.blueAccent,
                             isDark: isDark,
+                            isFan: true,
                             onReorder: (o, n) => setState(() {
                               if (n > o) n--;
                               _fans.insert(n, _fans.removeAt(o));
@@ -419,6 +440,7 @@ class _ControlScreenState extends State<ControlScreen> {
     required Color color,
     required bool isDark,
     required void Function(int, int) onReorder,
+    bool isFan = false,
   }) {
     return ReorderableListView(
       shrinkWrap: true,
@@ -458,6 +480,7 @@ class _ControlScreenState extends State<ControlScreen> {
                 icon: icon,
                 color: color,
                 isDark: isDark,
+                isFan: isFan,
               ),
             ),
           ),
@@ -470,9 +493,11 @@ class _ControlScreenState extends State<ControlScreen> {
     required IconData icon,
     required Color color,
     required bool isDark,
+    bool isFan = false,
   }) {
     final isOn = _states[config.key] ?? false;
     final duration = _formatDuration(config.key);
+    final speed = _fanSpeeds[config.key] ?? 1;
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
@@ -487,88 +512,220 @@ class _ControlScreenState extends State<ControlScreen> {
             ? Border.all(color: color.withValues(alpha: 0.4), width: 1.5)
             : null,
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Icon bubble
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 300),
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: isOn
-                  ? color.withValues(alpha: 0.18)
-                  : color.withValues(alpha: 0.07),
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: isOn
-                  ? [
-                      BoxShadow(
-                          color: color.withValues(alpha: 0.3),
-                          blurRadius: 12,
-                          spreadRadius: 1)
-                    ]
-                  : [],
-            ),
-            child: Icon(
-              icon,
-              color: isOn ? color : color.withValues(alpha: 0.5),
-              size: 22,
-            ),
-          ),
-          const SizedBox(width: 14),
-          // Labels
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  config.label,
-                  style: GoogleFonts.inter(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: isDark ? Colors.white : AppTheme.midnightCharcoal,
-                  ),
+          Row(
+            children: [
+              // Icon bubble
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: isOn
+                      ? color.withValues(alpha: 0.18)
+                      : color.withValues(alpha: 0.07),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: isOn
+                      ? [
+                          BoxShadow(
+                              color: color.withValues(alpha: 0.3),
+                              blurRadius: 12,
+                              spreadRadius: 1)
+                        ]
+                      : [],
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  config.location,
-                  style: GoogleFonts.inter(
-                    fontSize: 12,
-                    color: isDark
-                        ? Colors.white38
-                        : AppTheme.midnightCharcoal.withValues(alpha: 0.4),
-                    fontWeight: FontWeight.w500,
-                  ),
+                child: Icon(
+                  icon,
+                  color: isOn ? color : color.withValues(alpha: 0.5),
+                  size: 22,
                 ),
-                const SizedBox(height: 4),
-                // ── Usage time counter ──────────────────────────────
-                AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 300),
-                  child: Text(
-                    duration,
-                    key: ValueKey(duration),
-                    style: GoogleFonts.inter(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      color: isOn
-                          ? Colors.green
-                          : (isDark ? Colors.white24 : Colors.black26),
+              ),
+              const SizedBox(width: 14),
+              // Labels
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      config.label,
+                      style: GoogleFonts.inter(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color:
+                            isDark ? Colors.white : AppTheme.midnightCharcoal,
+                      ),
                     ),
-                  ),
+                    const SizedBox(height: 2),
+                    Text(
+                      config.location,
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        color: isDark
+                            ? Colors.white38
+                            : AppTheme.midnightCharcoal.withValues(alpha: 0.4),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    // ── Usage time counter ──────────────────────────────
+                    AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 300),
+                      child: Text(
+                        duration,
+                        key: ValueKey(duration),
+                        style: GoogleFonts.inter(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: isOn
+                              ? Colors.green
+                              : (isDark ? Colors.white24 : Colors.black26),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
+              // Toggle switch
+              Switch(
+                value: isOn,
+                onChanged: (val) => _toggle(config.key, val),
+                activeThumbColor: color,
+                activeTrackColor: color.withValues(alpha: 0.2),
+                inactiveThumbColor: Colors.white,
+                inactiveTrackColor: Colors.black.withValues(alpha: 0.07),
+              ),
+            ],
+          ),
+          // ── Fan Speed Selector ──────────────────────────────────────────
+          if (isFan)
+            AnimatedSize(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+              child: isOn
+                  ? Padding(
+                      padding: const EdgeInsets.only(top: 14),
+                      child: _buildFanSpeedSelector(
+                        deviceKey: config.key,
+                        currentSpeed: speed,
+                        color: color,
+                        isDark: isDark,
+                      ),
+                    )
+                  : const SizedBox.shrink(),
             ),
-          ),
-          // Toggle switch
-          Switch(
-            value: isOn,
-            onChanged: (val) => _toggle(config.key, val),
-            activeThumbColor: color,
-            activeTrackColor: color.withValues(alpha: 0.2),
-            inactiveThumbColor: Colors.white,
-            inactiveTrackColor: Colors.black.withValues(alpha: 0.07),
-          ),
         ],
       ),
     );
+  }
+
+  Widget _buildFanSpeedSelector({
+    required String deviceKey,
+    required int currentSpeed,
+    required Color color,
+    required bool isDark,
+  }) {
+    const speeds = [1, 2, 3, 4, 5];
+    const labels = ['1', '2', '3', '4', '5'];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(Icons.air_rounded,
+                size: 13, color: color.withValues(alpha: 0.8)),
+            const SizedBox(width: 5),
+            Text(
+              'FAN SPEED',
+              style: GoogleFonts.inter(
+                fontSize: 10,
+                fontWeight: FontWeight.w800,
+                color: color.withValues(alpha: 0.8),
+                letterSpacing: 1.1,
+              ),
+            ),
+            const Spacer(),
+            Text(
+              _speedLabel(currentSpeed),
+              style: GoogleFonts.inter(
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                color: isDark
+                    ? Colors.white54
+                    : AppTheme.midnightCharcoal.withValues(alpha: 0.5),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            for (int i = 0; i < speeds.length; i++) ...[
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => _setFanSpeed(deviceKey, speeds[i]),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: currentSpeed == speeds[i]
+                          ? color
+                          : (isDark
+                              ? Colors.white.withValues(alpha: 0.07)
+                              : color.withValues(alpha: 0.08)),
+                      borderRadius: BorderRadius.horizontal(
+                        left: i == 0 ? const Radius.circular(10) : Radius.zero,
+                        right: i == speeds.length - 1
+                            ? const Radius.circular(10)
+                            : Radius.zero,
+                      ),
+                      border: Border.all(
+                        color: currentSpeed == speeds[i]
+                            ? color
+                            : color.withValues(alpha: 0.18),
+                        width: 1,
+                      ),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      labels[i],
+                      style: GoogleFonts.inter(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                        color: currentSpeed == speeds[i]
+                            ? Colors.white
+                            : (isDark
+                                ? Colors.white54
+                                : color.withValues(alpha: 0.7)),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              if (i < speeds.length - 1) const SizedBox(width: 4),
+            ],
+          ],
+        ),
+      ],
+    );
+  }
+
+  String _speedLabel(int speed) {
+    switch (speed) {
+      case 1:
+        return 'Low';
+      case 2:
+        return 'Medium-Low';
+      case 3:
+        return 'Medium';
+      case 4:
+        return 'Medium-High';
+      case 5:
+        return 'High';
+      default:
+        return '';
+    }
   }
 }
 
