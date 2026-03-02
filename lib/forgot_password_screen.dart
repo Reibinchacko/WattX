@@ -162,26 +162,80 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
   Widget _buildIconHeader() {
     return Center(
-      child: Container(
-        width: 140,
-        height: 140,
-        decoration: const BoxDecoration(
-            shape: BoxShape.circle, color: Color(0xFFFFF9D0)),
-        child: Center(
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              Transform.rotate(
-                  angle: -0.5,
-                  child:
-                      const Icon(Icons.refresh, size: 60, color: Colors.black)),
-              const Positioned(
-                  right: 45,
-                  top: 45,
-                  child: Icon(Icons.lock, size: 35, color: Colors.black)),
-            ],
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // Outermost soft glow ring
+          Container(
+            width: 160,
+            height: 160,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: const Color(0xFFFFFBEB),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFF5A623).withValues(alpha: 0.18),
+                  blurRadius: 40,
+                  spreadRadius: 10,
+                ),
+              ],
+            ),
           ),
-        ),
+          // Middle ring
+          Container(
+            width: 130,
+            height: 130,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: const Color(0xFFFEF3C7),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFF5A623).withValues(alpha: 0.12),
+                  blurRadius: 20,
+                  spreadRadius: 2,
+                ),
+              ],
+            ),
+          ),
+          // Inner gradient circle
+          Container(
+            width: 100,
+            height: 100,
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: LinearGradient(
+                colors: [Color(0xFFF5A623), Color(0xFFFFD580)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Color(0x50F5A623),
+                  blurRadius: 20,
+                  offset: Offset(0, 6),
+                ),
+              ],
+            ),
+            // Shield icon with lock
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                // Shield
+                Icon(
+                  Icons.shield_rounded,
+                  size: 58,
+                  color: Colors.white.withValues(alpha: 0.25),
+                ),
+                // Lock on top of shield
+                const Icon(
+                  Icons.lock_rounded,
+                  size: 28,
+                  color: Colors.white,
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

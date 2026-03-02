@@ -244,4 +244,142 @@ class DatabaseService {
       debugPrint('Error seeding initial data: $e');
     }
   }
+
+  // ── Analytics Demo Seed ─────────────────────────────────────────────────────
+  // Writes realistic fake IoT readings once, only when Firebase paths are empty.
+
+  Future<void> seedAnalyticsData(String meterId) async {
+    final base = 'EnergyReadings/historical/$meterId';
+
+    // Hourly power curve: low at night, peaks at noon & evening
+    double kwForHour(int hour) {
+      const curve = [
+        0.8,
+        0.7,
+        0.6,
+        0.6,
+        0.7,
+        0.9,
+        1.2,
+        1.8,
+        2.1,
+        2.3,
+        2.5,
+        2.8,
+        2.6,
+        2.4,
+        2.2,
+        2.0,
+        2.1,
+        2.4,
+        2.8,
+        3.2,
+        3.0,
+        2.5,
+        1.8,
+        1.2,
+      ];
+      final jitter = (hour * 17 % 10) / 100.0 - 0.05;
+      return (curve[hour % 24] + jitter).clamp(0.4, 4.0);
+    }
+
+    double vFor(int seed) => 228.0 + (seed % 7);
+    double aFor(double kw, double v) => (kw * 1000) / v;
+
+    final now = DateTime.now();
+
+    // 1. RECENT — 24 readings (one per hour) for the Day chart
+    final recentSnap = await _db.ref('$base/recent').get();
+    if (!recentSnap.exists) {
+      debugPrint('[Seed] Writing /recent ...');
+      final ref = _db.ref('$base/recent');
+      for (int h = 23; h >= 0; h--) {
+        final ts = now.subtract(Duration(hours: h));
+        final kw = kwForHour(ts.hour);
+        final v = vFor(ts.hour);
+        await ref.push().set({
+          'power': kw,
+          'voltage': v,
+          'current': double.parse(aFor(kw, v).toStringAsFixed(2)),
+          'timestamp': ts.millisecondsSinceEpoch,
+        });
+      }
+    }
+
+    // 2. WEEKLY — 7 readings (one per day) for the Week chart
+    final weekSnap = await _db.ref('$base/weekly').get();
+    if (!weekSnap.exists) {
+      debugPrint('[Seed] Writing /weekly ...');
+      final ref = _db.ref('$base/weekly');
+      const dailyKWh = [32.4, 28.7, 35.1, 30.9, 38.2, 27.5, 33.8];
+      for (int d = 6; d >= 0; d--) {
+        final ts = now.subtract(Duration(days: d));
+        final kw = dailyKWh[6 - d] / 24;
+        final v = vFor(d * 3);
+        await ref.push().set({
+          'power': double.parse(kw.toStringAsFixed(2)),
+          'voltage': v,
+          'current': double.parse(aFor(kw, v).toStringAsFixed(2)),
+          'timestamp':
+              DateTime(ts.year, ts.month, ts.day, 12).millisecondsSinceEpoch,
+        });
+      }
+    }
+
+    // 3. MONTHLY — 30 readings (one per day) for the Month chart
+    final monthSnap = await _db.ref('$base/monthly').get();
+    if (!monthSnap.exists) {
+      debugPrint('[Seed] Writing /monthly ...');
+      final ref = _db.ref('$base/monthly');
+      for (int d = 29; d >= 0; d--) {
+        final ts = now.subtract(Duration(days: d));
+        final kw =
+            (ts.weekday >= 6) ? 1.1 + (d % 5) * 0.08 : 1.4 + (d % 7) * 0.09;
+        final v = vFor(d);
+        await ref.push().set({
+          'power': double.parse(kw.toStringAsFixed(2)),
+          'voltage': v,
+          'current': double.parse(aFor(kw, v).toStringAsFixed(2)),
+          'timestamp':
+              DateTime(ts.year, ts.month, ts.day, 12).millisecondsSinceEpoch,
+        });
+      }
+    }
+
+    // 4. YEARLY — 12 readings (one per month) for the Year chart
+    final yearSnap = await _db.ref('$base/yearly').get();
+    if (!yearSnap.exists) {
+      debugPrint('[Seed] Writing /yearly ...');
+      final ref = _db.ref('$base/yearly');
+      const monthlyKWh = [
+        210.0,
+        195.0,
+        175.0,
+        160.0,
+        155.0,
+        185.0,
+        240.0,
+        235.0,
+        200.0,
+        170.0,
+        180.0,
+        215.0,
+      ];
+      for (int m = 11; m >= 0; m--) {
+        final monthIdx = ((now.month - m - 1) % 12 + 12) % 12;
+        final year = now.year - ((now.month - m <= 0) ? 1 : 0);
+        final ts = DateTime(year, monthIdx + 1, 15);
+        final kw = monthlyKWh[monthIdx] / (24 * 30);
+        final v = vFor(m * 7);
+        await ref.push().set({
+          'power': double.parse(kw.toStringAsFixed(3)),
+          'voltage': v,
+          'current': double.parse(aFor(kw, v).toStringAsFixed(2)),
+          'timestamp': ts.millisecondsSinceEpoch,
+        });
+      }
+    }
+
+    debugPrint('[Seed] Analytics data ready in Firebase.');
+  }
 }

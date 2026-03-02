@@ -5,6 +5,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'theme/app_theme.dart';
 import 'models/reading_model.dart';
+import 'services/database_service.dart';
 
 class AnalyticsScreen extends StatefulWidget {
   const AnalyticsScreen({super.key});
@@ -34,8 +35,12 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
   @override
   void initState() {
     super.initState();
-    _subscribeToLive();
-    _loadHistorical();
+    // Seed demo data into Firebase first (no-op if data already exists),
+    // then subscribe to live stream and load historical periods.
+    DatabaseService().seedAnalyticsData('METER001').then((_) {
+      _subscribeToLive();
+      _loadHistorical();
+    });
   }
 
   /// Subscribes to the recent node which the IoT device keeps updated.
