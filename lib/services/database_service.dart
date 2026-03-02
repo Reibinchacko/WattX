@@ -1,4 +1,6 @@
 import 'package:flutter/foundation.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_database/firebase_database.dart';
 import '../models/user_model.dart';
 import '../models/meter_model.dart';
@@ -191,6 +193,108 @@ class DatabaseService {
       }
       return [];
     });
+  }
+
+  // --- Admin: User Management ---
+
+  /// Streams ALL users from Firebase (both 'user' and 'officer' roles).
+  Stream<List<UserModel>> getAllUsers() {
+    return _db.ref('Users').onValue.map((event) {
+      final data = event.snapshot.value as Map<dynamic, dynamic>?;
+      if (data == null) return [];
+      return data.entries
+          .map((e) => UserModel.fromMap(
+              e.key as String, e.value as Map<dynamic, dynamic>))
+          .toList()
+        ..sort((a, b) =>
+            (b.createdAt ?? DateTime(0)).compareTo(a.createdAt ?? DateTime(0)));
+    });
+  }
+
+  /// Streams users filtered by role ('user' or 'officer').
+  Stream<List<UserModel>> getUsersByRole(String role) {
+    return getAllUsers()
+        .map((users) => users.where((u) => u.role == role).toList());
+  }
+
+  // Secondary Firebase App used only for creating accounts
+  // (so the admin session is never disrupted).
+  static FirebaseApp? _secondaryApp;
+
+  Future<FirebaseApp> _getSecondaryApp() async {
+    _secondaryApp ??= await Firebase.initializeApp(
+      name: 'secondary',
+      options: const FirebaseOptions(
+        apiKey: 'AIzaSyB2BoOFZrtoK2uFaItzRGBTdZ2xT2pxdI4',
+        appId: '1:350835321492:android:2195ce3e367531eecc6281',
+        messagingSenderId: '350835321492',
+        projectId: 'wattx-16024',
+        databaseURL: 'https://wattx-16024-default-rtdb.firebaseio.com',
+      ),
+    );
+    return _secondaryApp!;
+  }
+
+  /// Creates a new Firebase Auth account and writes user profile to /Users.
+  /// Uses a secondary Firebase App to keep the admin session intact.
+  Future<String> createUserByAdmin({
+    required String name,
+    required String email,
+    required String password,
+    required String role,
+    String? phone,
+    String? address,
+    String? meterId,
+  }) async {
+    try {
+      final secondaryApp = await _getSecondaryApp();
+      final secondaryAuth = FirebaseAuth.instanceFor(app: secondaryApp);
+
+      // Create the account in the secondary auth context
+      final cred = await secondaryAuth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      final newUid = cred.user!.uid;
+
+      // Write profile to the primary database (admin is still signed in on primary)
+      await _db.ref('Users/$newUid').set({
+        'name': name,
+        'email': email,
+        'role': role,
+        'phoneNumber': phone,
+        'address': address,
+        'budgetLimit': 125.0,
+        'isActive': true,
+        'createdAt': ServerValue.timestamp,
+        'profileImageUrl':
+            'https://api.dicebear.com/7.x/avataaars/png?seed=${Uri.encodeComponent(name)}',
+      });
+
+      // Link meterId if provided
+      if (meterId != null && meterId.isNotEmpty) {
+        await _db.ref('Devices/$meterId').update({'uid': newUid});
+      }
+
+      // Sign out from secondary only — admin session is untouched
+      await secondaryAuth.signOut();
+
+      debugPrint('[Admin] Created $role account: $email (uid=$newUid)');
+      return newUid;
+    } catch (e) {
+      debugPrint('[Admin] Error creating user: $e');
+      rethrow;
+    }
+  }
+
+  /// Toggles a user's active status.
+  Future<void> setUserActive(String uid, bool isActive) async {
+    await _db.ref('Users/$uid').update({'isActive': isActive});
+  }
+
+  /// Updates a user's role.
+  Future<void> setUserRole(String uid, String role) async {
+    await _db.ref('Users/$uid').update({'role': role});
   }
 
   // --- Complaints ---

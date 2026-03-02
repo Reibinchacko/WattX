@@ -712,20 +712,7 @@ class _ControlScreenState extends State<ControlScreen> {
   }
 
   String _speedLabel(int speed) {
-    switch (speed) {
-      case 1:
-        return 'Low';
-      case 2:
-        return 'Medium-Low';
-      case 3:
-        return 'Medium';
-      case 4:
-        return 'Medium-High';
-      case 5:
-        return 'High';
-      default:
-        return '';
-    }
+    return 'Speed $speed';
   }
 }
 

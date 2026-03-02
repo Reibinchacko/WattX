@@ -60,60 +60,55 @@ class _KsebAlertsScreenState extends State<KsebAlertsScreen> {
   @override
   Widget build(BuildContext context) {
     final filtered = _filteredAlerts;
-    return Scaffold(
-      backgroundColor: const Color(0xFFF9F9F8),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildHeader(context),
-              const SizedBox(height: 24),
-              _buildFilterChips(),
-              const SizedBox(height: 24),
-              _buildSummaryCards(),
-              const SizedBox(height: 32),
-              _buildSectionTitle('TODAY', '${filtered.length} New'),
-              const SizedBox(height: 16),
-              ...filtered.map((alert) => Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
-                    child: _buildAlertCard(
-                      type: alert['type'],
-                      title: alert['title'],
-                      name: alert['name'],
-                      consumerId: alert['consumerId'],
-                      location: alert['location'],
-                      time: alert['time'],
-                      status: alert['status'],
-                      icon: alert['icon'],
-                      color: alert['color'],
-                    ),
-                  )),
-              const SizedBox(height: 32),
-              _buildSectionTitle('YESTERDAY', ''),
-              const SizedBox(height: 16),
-              _buildResolvedCard(
-                title: 'Outage Reported',
-                name: 'Sandeep Varma',
-                time: 'Yesterday, 4:15 PM',
-                icon: Icons.power_off_rounded,
-              ),
-              const SizedBox(height: 32),
-              Center(
-                child: Text(
-                  'End of list',
-                  style: GoogleFonts.inter(
-                    fontSize: 12,
-                    color: Colors.black26,
-                    fontWeight: FontWeight.w500,
-                  ),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildHeader(context),
+          const SizedBox(height: 24),
+          _buildFilterChips(),
+          const SizedBox(height: 24),
+          _buildSummaryCards(),
+          const SizedBox(height: 32),
+          _buildSectionTitle('TODAY', '${filtered.length} New'),
+          const SizedBox(height: 16),
+          ...filtered.map((alert) => Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: _buildAlertCard(
+                  type: alert['type'],
+                  title: alert['title'],
+                  name: alert['name'],
+                  consumerId: alert['consumerId'],
+                  location: alert['location'],
+                  time: alert['time'],
+                  status: alert['status'],
+                  icon: alert['icon'],
+                  color: alert['color'],
                 ),
-              ),
-              const SizedBox(height: 80),
-            ],
+              )),
+          const SizedBox(height: 32),
+          _buildSectionTitle('YESTERDAY', ''),
+          const SizedBox(height: 16),
+          _buildResolvedCard(
+            title: 'Outage Reported',
+            name: 'Sandeep Varma',
+            time: 'Yesterday, 4:15 PM',
+            icon: Icons.power_off_rounded,
           ),
-        ),
+          const SizedBox(height: 32),
+          Center(
+            child: Text(
+              'End of list',
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                color: Colors.black26,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          const SizedBox(height: 80),
+        ],
       ),
     );
   }
