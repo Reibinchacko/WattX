@@ -1,0 +1,780 @@
+
+==============================================================
+CHAPTER 1 - INTRODUCTION
+==============================================================
+
+1.1 PROJECT OVERVIEW
+
+In today's world, rapid industrialization and the growing dependency on
+electronic appliances have resulted in a dramatic increase in household
+electricity consumption. The rising cost of electricity tariffs imposed by
+utility providers such as the Kerala State Electricity Board (KSEB) has made
+it increasingly important for consumers to monitor, understand, and reduce
+their energy usage. However, the traditional energy metering infrastructure
+available to most Indian households does not provide the real-time visibility
+necessary to make informed decisions about energy consumption.
+
+WattX - Smart Energy Monitor is an innovative solution designed to bridge
+this technological gap. It is an IoT (Internet of Things) based smart energy
+monitoring and management system that combines embedded hardware with a
+feature-rich Flutter mobile application backed by Firebase cloud services.
+The system provides homeowners with real-time visibility into their
+electricity consumption, the ability to remotely control household appliances,
+intelligent alert notifications, detailed energy analytics, and integrated
+bill payment capabilities.
+
+The name "WattX" is derived from the SI unit of power "Watt" combined with
+"X" signifying the next generation of smart energy solutions. The system is
+designed specifically for Indian households served by KSEB (Kerala State
+Electricity Board) and operates on a 230V AC, 50 Hz single-phase supply
+which is the standard household supply across Kerala and most of India.
+
+HARDWARE ARCHITECTURE:
+The hardware component of WattX consists of an ESP8266/ESP32 WiFi-enabled
+microcontroller integrated with a PZEM-004T v3.0 energy measurement module.
+The PZEM-004T sensor is a high-accuracy AC energy metering module capable
+of measuring:
+  - Voltage (V): Range 80-260V AC, Accuracy +/-0.5%
+  - Current (A): Range 0-100A, Accuracy +/-0.5%
+  - Active Power (W/kW): Range 0-23kW, Accuracy +/-0.5%
+  - Power Factor (PF): Range 0.00-1.00, Resolution 0.01
+  - Frequency (Hz): Range 45-65 Hz, Accuracy +/-0.5%
+  - Active Energy (kWh): Range 0-9999.99 kWh
+
+The microcontroller reads these values every 2 seconds and publishes them to
+the HiveMQ cloud MQTT broker using the MQTT protocol over an encrypted WiFi
+connection (TLS/SSL on port 8883). The device is assigned Meter ID: METER001.
+
+SOFTWARE ARCHITECTURE:
+The software layer has three main components:
+
+1. Flutter Mobile App (Android): A fully functional mobile application
+   developed in Dart using the Flutter framework (version 3.x). The app
+   communicates with Firebase Realtime Database to display live energy data,
+   supports real-time appliance control, shows analytics charts, sends
+   smart notifications, integrates Razorpay for bill payment, and provides
+   role-based dashboards for Users, KSEB Officers, and Admins.
+
+2. Firebase Backend: Google Firebase provides the cloud infrastructure:
+   - Firebase Realtime Database: NoSQL JSON database for live IoT data,
+     device states, analytics, schedules, and alerts
+   - Cloud Firestore: Document database for user profiles, bills,
+     complaints, payments, service requests, and notices
+   - Firebase Authentication: Secure sign-in with email/password and Google
+   - Firebase Push Notifications: Real-time smart alert delivery
+
+3. MQTT-Firebase Bridge (mqtt_sync.py): A Python 3.x script using the
+   paho-mqtt library that acts as a middleware bridge. It subscribes to the
+   MQTT broker, receives IoT sensor data, and writes it to Firebase Realtime
+   Database in real time. It also monitors Firebase for device control
+   commands and relays them back to the hardware via MQTT.
+
+USER ROLES AND ACCESS:
+WattX implements a 3-tier role-based access control system:
+
+  ROLE 1 - Regular User (Homeowner):
+    - Views live energy dashboard (kW, V, A, Hz, PF)
+    - Controls home appliances remotely (3 lights + 2 fans)
+    - Sets device auto-OFF schedules
+    - Views analytics charts (Day/Week/Month/Year)
+    - Receives smart alert notifications
+    - Views monthly electricity bill with itemized breakdown
+    - Pays electricity bill via Razorpay (UPI/Card/Net Banking)
+    - Views energy-saving tips and recommendations
+    - Registers complaints with KSEB
+    - Manages personal profile and settings
+
+  ROLE 2 - KSEB Officer:
+    - Views list of consumers assigned to them
+    - Manages consumer complaints (open/in-progress/resolved)
+    - Handles service requests from consumers
+    - Receives and posts official notices
+    - Views consumer energy consumption data
+
+  ROLE 3 - Admin:
+    - Views and manages all registered users
+    - Activates or deactivates user accounts
+    - Views all registered smart meters (METER001, etc.)
+    - Assigns KSEB Officers to consumer accounts
+    - Monitors system-wide energy consumption data
+
+APPLICATION SCREENS:
+WattX consists of 14 distinct screens:
+  1.  splash_screen.dart          - Auto-routing on app launch
+  2.  login_screen.dart           - Email/Password + Google Sign-In
+  3.  signup_screen.dart          - New account registration
+  4.  forgot_password_screen.dart - Password reset via email
+  5.  dashboard_screen.dart       - Live energy dashboard (home)
+  6.  analytics_screen.dart       - Energy usage charts
+  7.  control_screen.dart         - Appliance remote control
+  8.  schedules_screen.dart       - Device auto-OFF scheduling
+  9.  bill_savings_screen.dart    - Bill view & Razorpay payment
+  10. notifications_screen.dart   - Smart alerts and notifications
+  11. profile_screen.dart         - User profile & settings
+  12. admin_dashboard_screen.dart - Admin management panel
+  13. kseb_officer_dashboard_screen.dart - Officer panel
+  14. register_complaint_screen.dart    - Complaint submission
+
+1.2 PROJECT SPECIFICATION
+
+APPLICATION DETAILS:
+  Application Name     : WattX - Smart Energy Monitor
+  Package Name         : com.example.wattx
+  Platform             : Android (primary); Flutter supports iOS/web
+  Programming Language : Dart 3.x
+  UI Framework         : Flutter 3.x
+  App Version          : 2.4.0
+  Build Number         : 132
+  Minimum SDK          : API 21 (Android 5.0 Lollipop)
+  Target SDK           : API 34 (Android 14)
+  AdaptiveIcon         : Background #1A1C1E with WattX logo foreground
+
+BACKEND SERVICES:
+  Primary Database     : Firebase Realtime Database (firebase_database ^10.4.0)
+  Secondary Database   : Cloud Firestore (cloud_firestore ^4.14.0)
+  Authentication       : Firebase Auth (firebase_auth ^4.17.0)
+  Core Firebase        : firebase_core ^2.27.0
+
+STATE MANAGEMENT:
+  Pattern              : Provider (provider ^6.1.1)
+  ThemeProvider        : Manages light/dark mode, persisted via
+                         shared_preferences ^2.2.2
+
+IoT INTEGRATION:
+  Protocol             : MQTT (Message Queuing Telemetry Transport)
+  MQTT Broker          : HiveMQ Cloud (free tier)
+  Broker Port          : 8883 (TLS/SSL encrypted)
+  Bridge Script        : mqtt_sync.py (Python 3.x + paho-mqtt)
+  Default Meter ID     : METER001
+  Data Refresh Rate    : Every 2 seconds from IoT device
+
+PAYMENT INTEGRATION:
+  Gateway              : Razorpay (razorpay_flutter ^1.4.1)
+  Supported Methods    : UPI, Credit/Debit Cards, Net Banking, Wallets
+  Currency             : INR (Indian Rupee)
+  Mode                 : Test sandbox during development
+
+CHARTS & VISUALIZATION:
+  Library              : fl_chart ^0.70.2
+  Chart Types          : LineChart (usage trend), BarChart (breakdown)
+  Time Filters         : Day / Week / Month / Year
+  Features             : Tap tooltips, animated transitions
+
+TYPOGRAPHY & DESIGN:
+  Font Family          : Inter (Google Fonts - google_fonts ^6.1.0)
+  Design Theme         : Dark glassmorphism
+  Primary Color        : #4FC3F7 (Electric Blue)
+  Background Color     : #0A0E1A (Deep Navy)
+  Card Color           : rgba(255,255,255,0.08) with blur effect
+  Text Color           : #E8EAED (Soft White)
+
+VERSION CONTROL & DEVELOPMENT:
+  Version Control      : Git
+  Repository Host      : GitHub
+  IDE                  : Android Studio / VS Code (with Flutter extension)
+  Dart Analyzer        : flutter_lints ^3.0.0
+
+KSEB SPECIFIC DETAILS:
+  Utility Provider     : KSEB (Kerala State Electricity Board)
+  Supply Voltage       : 230V AC (single phase)
+  Supply Frequency     : 50 Hz
+  Tariff Calculation   : Based on KSEB LT-IA domestic tariff schedule
+  Default Rate         : approx. INR 3.15 per kWh (first 500 units)
+  Bill Period          : Monthly
+
+==============================================================
+CHAPTER 2 - SYSTEM STUDY
+==============================================================
+
+2.1 INTRODUCTION
+
+A system study is a comprehensive investigation and analysis of the existing
+systems and processes that relate to the problem being solved. The purpose
+of the system study for WattX is to thoroughly understand how household
+energy monitoring and billing is currently handled, identify the specific
+deficiencies and limitations of existing approaches, and establish a clear
+rationale for the proposed smart energy monitoring solution.
+
+Energy is one of the most critical resources in modern society. India's
+electricity consumption has been growing at approximately 6-7% annually,
+and Kerala, despite having near-100% electrification, faces significant
+challenges with household energy wastage. According to KSEB data, domestic
+consumers account for approximately 40% of total electricity consumption in
+Kerala. The average monthly domestic electricity consumption in Kerala is
+approximately 200-250 kWh per household.
+
+Key problems driving the need for WattX:
+
+PROBLEM 1 - LACK OF REAL-TIME VISIBILITY:
+Traditional electricity meters (electromechanical or digital) only display a
+cumulative kWh counter. A consumer has absolutely no way to know how much
+power their home is consuming at any given moment. They cannot see if they
+accidentally left an appliance running or if a faulty device is drawing
+excess power. This ignorance leads to "bill shock" at the end of every month.
+
+PROBLEM 2 - NO REMOTE CONTROL:
+If a homeowner forgets to switch off an air conditioner, lights, or fans
+before leaving home, there is currently no way to turn them off remotely.
+This results in both energy wastage and increased electricity bills.
+
+PROBLEM 3 - DELAYED BILLING:
+KSEB meters are read manually by field workers who visit each household once
+a month. This process is inherently delayed, sometimes inaccurate due to
+human error, and gives consumers only a retrospective view of their energy
+usage with no way to course-correct during the billing cycle.
+
+PROBLEM 4 - NO SMART ALERTS:
+There is no system to automatically alert a consumer when their power
+consumption spikes abnormally (indicating a faulty appliance or theft),
+when their estimated monthly bill is approaching a budget threshold, or when
+a device has been left on idle for an extended period.
+
+PROBLEM 5 - INCONVENIENT BILL PAYMENT:
+Paying electricity bills in Kerala still requires either visiting a KSEB
+office, using the KSEB online portal (which has limited mobile optimization),
+or visiting a common service center. There is no integrated mobile payment
+solution specifically designed for KSEB consumers.
+
+The system study of WattX directly addresses all five of these problems.
+
+2.2 EXISTING SYSTEM
+
+2.2.1 NATURAL SYSTEM STUDIED
+
+The conventional household electricity metering and billing system currently
+employed by KSEB (Kerala State Electricity Board) operates as follows:
+
+METERING INFRASTRUCTURE:
+- Electromechanical Induction Meters (older installations): These are analog
+  disc-rotation meters that are slowly being phased out. They measure only
+  cumulative active energy (kWh) and have no data communication capability.
+- Static/Digital Energy Meters (newer installations): Solid-state meters
+  that measure kWh and sometimes display parameters like voltage, but store
+  no data electronically and cannot communicate with any network.
+- Both meter types are protected in sealed enclosures mounted at the point
+  of supply entry (typically outside or on the wall of the home).
+
+METER READING PROCESS:
+1. A KSEB meter reader visits each household (typically once every 30-35 days)
+2. The reader manually notes the kWh reading from the meter's LCD/dial display
+3. Readings are entered into a handheld device or paper forms
+4. Data is uploaded to the KSEB billing server
+5. Bill is generated by the billing server based on the difference between
+   the current and previous reading, applying the applicable LT-IA tariff
+6. Bill is delivered via post, or available on KSEB's web portal
+
+BILLING TARIFF (KSEB LT-IA Residential):
+- 0-40 units/month   : INR 1.50 per unit (subsidized rate)
+- 41-80 units/month  : INR 3.25 per unit
+- 81-500 units/month : INR 4.00 per unit
+- Above 500 units    : INR 5.50 per unit
+- Plus fixed charges, electricity duty (10%), and meter rent
+
+CONSUMER INTERACTION:
+- Consumers can check their account via KSEB Self-Service Portal (ksebl.in)
+- Bill payment options: KSEB office cash counters, post offices, common
+  service centers, KSEB online portal, Google Pay (limited integration)
+- Complaints: Submitted via toll-free number (1912) or visiting local KSEB
+  sub-division office
+- Service Requests: Submitted in person at KSEB office with supporting docs
+
+2.2.2 DESIGNED SYSTEM STUDIED
+
+Before developing WattX, the following existing designed smart energy
+monitoring solutions were studied and analyzed:
+
+SYSTEM 1: SENSE HOME ENERGY MONITOR (USA)
+  Overview: Sense is a US-based smart home energy monitor that clamps onto
+  the main electrical panel (load center) and uses machine learning algorithms
+  to identify individual appliances by their electrical "signatures."
+  
+  Technical Specs:
+  - Clips onto 200A service panel
+  - Monitors whole-home usage at 1 million samples/second
+  - Uses ML to identify device types (AC, refrigerator, EV charger)
+  - Cloud-based analysis with iOS/Android app
+  - Integration with Alexa, Google Home, Home Assistant
+  
+  Price: USD 299 (approx. INR 24,000)
+  
+  Limitations for Indian Market:
+  - Designed for US 120V/240V split-phase system, not 230V single-phase
+  - No KSEB integration or Indian tariff computation
+  - Very expensive for Indian consumers
+  - ML appliance detection does not work reliably for Indian appliances
+  - Not available for purchase in India through official channels
+  - No Razorpay or UPI payment integration
+  - App not optimized for KSEB billing cycles
+
+SYSTEM 2: SHELLY EM (EUROPE)
+  Overview: Shelly EM is a European IoT energy monitor for DIN rail mounting.
+  It connects to WiFi and provides cloud monitoring through the Shelly Cloud
+  app. It supports two current clamps (up to 120A each).
+  
+  Technical Specs:
+  - Measures voltage, current, active power, reactive power, power factor
+  - WiFi 802.11 b/g/n (2.4 GHz)
+  - Shelly Cloud + local API access
+  - MQTT support (local broker only)
+  - Works with standard 220V-240V European supply
+  
+  Price: EUR 30-40 (approx. INR 2,700-3,600)
+  
+  Limitations for Indian Market:
+  - No dedicated Indian mobile app with KSEB billing integration
+  - Local MQTT only (no cloud MQTT bridge by default)
+  - No bill payment feature (no Razorpay/UPI integration)
+  - No anomaly detection or smart alert system
+  - No role-based system for utility officers/admins
+  - Complex setup requiring technical knowledge of networking
+  - Documentation and support primarily in English and European languages
+  - No KSEB complaint/service request management
+
+SYSTEM 3: KSEB SMART METER PILOT PROJECT
+  Overview: KSEB has been piloting Advanced Metering Infrastructure (AMI)
+  smart meters in select areas of Kerala (primarily Thiruvananthapuram and
+  Ernakulam districts) as part of India's Smart Meter National Program (SMNP).
+  
+  Technical Details:
+  - Single-phase and three-phase smart meters with SIM-based communication
+  - AMI meters communicate via GPRS/4G to KSEB's head-end system (HES)
+  - KSEB gets remote reading capability and can do demand-side management
+  - Planned to support time-of-use tariffs and pre-paid metering
+  
+  Consumer-Facing Limitations (as of 2025-26 pilot):
+  - No consumer-facing mobile application with real-time data
+  - Consumers cannot see their live consumption data
+  - No appliance control integration
+  - No smart alerts to consumers
+  - Rollout limited to a very small percentage of KSEB consumers
+  - No bill payment app integration
+  - Estimated full Malayalam coverage: 5+ years from now
+
+SYSTEM 4: TASMOTA-BASED DIY SMARTPLUG MONITORS
+  Overview: Tech-savvy consumers sometimes use Sonoff/Tuya smart plugs
+  flashed with Tasmota firmware for energy monitoring at the device level.
+  
+  Limitations:
+  - Single-device monitoring only (per plug)
+  - No whole-house monitoring
+  - Very complex setup requiring firmware flashing skills
+  - No KSEB bill integration
+  - No unified mobile app for household-level management
+
+STUDY CONCLUSION:
+None of the existing systems provide a complete, affordable, India-specific,
+and KSEB-integrated solution with all of the following in one platform:
+real-time whole-house monitoring + remote appliance control + smart alerts
++ analytics + role-based access (User/Officer/Admin) + Razorpay bill payment.
+WattX is designed to fill this exact gap.
+
+2.3 DRAWBACKS OF EXISTING SYSTEM
+
+Based on the system study, the following specific drawbacks of the existing
+energy monitoring and billing systems have been identified:
+
+DRAWBACK 1 - NO REAL-TIME CONSUMPTION VISIBILITY:
+Traditional KSEB meters only show a cumulative kWh dial/display, which tells
+the consumer nothing about their instantaneous power consumption. A consumer
+cannot distinguish between "I am currently consuming 0.5 kW" (lights on) 
+versus "I am currently consuming 4.5 kW" (AC + water heater on). This lack
+of real-time visibility is the root cause of energy wastage in most homes.
+Impact: Consumers consistently underestimate their consumption and receive
+unexpected high bills at the end of the month.
+
+DRAWBACK 2 - NO REMOTE APPLIANCE CONTROL:
+There is no mechanism in the existing system that allows a consumer to
+remotely switch off an appliance from a mobile device. If a user forgets
+to turn off the living room AC before going to work, that AC will run for
+8-10 hours unnecessarily, adding approximately INR 80-100 to the monthly bill
+for a single forgotten-on incident. With multiple appliances and incidents,
+this adds up to hundreds of rupees per month.
+
+DRAWBACK 3 - MANUAL METER READING IS DELAYED AND ERROR-PRONE:
+The monthly manual meter reading process introduces a lag of 30-35 days
+between actual consumption and billing. During this period, the consumer has
+no idea if they are on track or over-budget. Additionally, meter readers
+occasionally mis-read meters or enter wrong values, leading to disputed bills
+that require formal complaints and office visits to resolve.
+
+DRAWBACK 4 - NO ANOMALY DETECTION OR SMART ALERTS:
+Existing systems offer zero intelligence. They cannot detect:
+  - An unusually high power spike (indicating a faulty appliance or energy
+    theft by illegal tapping to the meter)
+  - A device left on idle consuming phantom power
+  - Approaching the monthly budget or billing threshold
+  - Unusual consumption patterns compared to historical data
+Without such alerts, many anomalies go undetected for an entire billing cycle.
+
+DRAWBACK 5 - INCONVENIENT BILL PAYMENT PROCESS:
+Traditional KSEB bill payment requires physical presence at a KSEB cash
+counter, post office, or bank. The KSEB online portal (ksebl.in) exists but
+is not a mobile-optimized application, and does not support all UPI payment
+methods. There is no single app that combines energy monitoring AND bill
+payment in a seamless consumer experience.
+
+DRAWBACK 6 - NO APPLIANCE SCHEDULING CAPABILITY:
+Consumers cannot pre-program household appliances to turn off at a specific
+time. For example, a consumer who goes to sleep at 10 PM cannot schedule
+the TV or fan to automatically turn off at midnight. This requires manual
+remembering, which often fails, causing overnight energy wastage.
+
+DRAWBACK 7 - NO DIGITIZED COMPLAINT AND SERVICE REQUEST SYSTEM:
+Registering a complaint with KSEB (for supply interruption, billing dispute,
+meter fault, etc.) currently requires calling the toll-free number 1912 or
+physically visiting the nearest KSEB sub-division office. There is no mobile
+app-based system where consumers can raise complaints, track their status,
+and receive digital resolution notifications.
+
+DRAWBACK 8 - NO ANALYTICS OR TREND VISUALIZATION:
+Consumers receive no graphical representation of their energy consumption
+trends over time. There are no charts, no comparisons between days/weeks/months,
+and no insights into which time periods have the highest consumption. This
+makes it impossible to make data-driven decisions about energy saving.
+
+DRAWBACK 9 - NO ROLE-BASED DIGITAL SYSTEM FOR KSEB OFFICERS:
+KSEB field officers who manage multiple consumer accounts have no dedicated
+mobile interface. They manage records through internal desktop software and
+paper files, with no mobile access to consumer data while in the field.
+
+2.4 PROPOSED SYSTEM
+
+WattX is a comprehensive, IoT-based smart energy monitoring and management
+platform that directly addresses all the drawbacks identified above.
+
+SYSTEM OVERVIEW:
+The WattX system consists of three tightly integrated layers - hardware
+(IoT smart meter), cloud backend (Firebase), and software (Flutter mobile
+app) - all communicating via standardized protocols (MQTT, HTTPS, REST).
+
+LAYER 1 - IoT HARDWARE COMPONENT:
+
+Device: WattX Smart Meter (ESP8266 + PZEM-004T)
+
+The smart meter hardware is built on the ESP8266 NodeMCU WiFi development
+board interfaced with the PZEM-004T v3.0 energy measurement module via
+UART (serial) communication. The PZEM-004T uses a split-core current
+transformer (CT sensor) that clamps onto the live wire at the distribution
+board, making installation non-invasive and safe.
+
+Data Collection Flow:
+  ESP8266 <-(UART 9600 baud)- PZEM-004T <-(CT Sensor)- Live 230V AC Wire
+
+Data collected every 2 seconds:
+  - Voltage: 231.5V (typical Kerala supply)
+  - Current: 6.14A
+  - Active Power: 1.42 kW
+  - Power Factor: 0.95
+  - Frequency: 50.0 Hz
+
+Data Publication:
+  ESP8266 connects to household WiFi (2.4 GHz WPA2) and publishes raw
+  JSON sensor data to HiveMQ Cloud MQTT broker on topic:
+    Topic: "METER001/readings"
+    Payload: {"power":1.42,"voltage":231.5,"current":6.14,
+              "powerFactor":0.95,"frequency":50.0,"timestamp":1741180320000}
+    QoS: 1 (at least once delivery)
+    TLS: Port 8883 with SSL certificate validation
+
+Device Control Reception:
+  The ESP8266 also subscribes to: "METER001/controls"
+  When it receives: {"light1":true} - it sets GPIO pin HIGH (relay ON)
+  Relay module controls 5 circuits: Light1, Light2, Light3, Fan1, Fan2
+
+LAYER 2 - MQTT-FIREBASE BRIDGE (mqtt_sync.py):
+
+The Python bridge script is the middleware that connects the MQTT world
+(IoT devices) with the Firebase cloud world (mobile app). It runs
+continuously on a laptop, desktop, or Raspberry Pi connected to the internet.
+
+Functions of mqtt_sync.py:
+  a) Subscribe to "METER001/readings" -> write to Firebase RTDB
+     /readings/METER001/latest (live snapshot, overwritten every 2 sec)
+     /readings/METER001/history/{timestamp} (historical archive)
+
+  b) Monitor Firebase /devices/METER001/controls for changes ->
+     publish corresponding MQTT message to "METER001/controls"
+     This allows the app to control physical devices in real time
+
+  c) Write analytics summaries:
+     Calculate hourly/daily/weekly/monthly kWh averages and write to:
+     /analytics/METER001/day, /analytics/METER001/week, etc.
+
+LAYER 3 - FLUTTER MOBILE APPLICATION:
+
+The mobile app is built in Dart using Flutter 3.x targeting Android.
+It implements the following 9 feature modules:
+
+MODULE 1 - DASHBOARD (Home Screen):
+  The dashboard is the main screen of the WattX app. It provides a
+  comprehensive real-time overview of the household's electrical status:
+  
+  a) Live Power Card: Prominently displays current power consumption in kW
+     (e.g., "1.42 kW") with a pulsing animation indicating live data.
+     The card shows a mini trend sparkline of the last 10 readings.
+  
+  b) Anomaly Banner: An AI-powered banner that compares the current power
+     reading against the user's 7-day rolling average:
+     - EFFICIENT (green): Current usage is >20% below 7-day average
+     - NORMAL (blue): Within ±20% of 7-day average
+     - HIGH (orange): Current usage is 50-100% above 7-day average
+     - CRITICAL (red): Current usage is >100% above 7-day average
+     Example: "⚠ CRITICAL: Usage is 320% above your 7-day average!"
+  
+  c) Quick Controls: Glassmorphism-styled toggle pills for Light1 (Living
+     Room), Light2 (Bedroom), Light3 (Kitchen), Fan1 (Living Room), Fan2
+     (Bedroom). Each pill shows device name and ON/OFF state with a
+     colored indicator. Active count badge shows "X/5 ON" in the header.
+  
+  d) Metrics Grid: Four live metric cards arranged in a 2x2 grid:
+     - Voltage: 231.5 V (with normal range indicator)
+     - Current: 6.14 A
+     - Frequency: 50.0 Hz
+     - Power Factor: 0.95 (with efficiency indicator)
+  
+  e) Daily Goal Card: Shows energy savings progress for the current day
+     with a circular progress indicator and percentage saved vs yesterday.
+
+MODULE 2 - ANALYTICS:
+  Interactive energy analytics with 4 time period filters:
+  
+  a) DAY View: Shows hourly energy consumption for the current day as a
+     smooth line chart. X-axis: hours (0-23), Y-axis: kW. Tapping any
+     point shows a tooltip with exact value and time.
+  
+  b) WEEK View: Shows daily kWh consumption for the past 7 days as a
+     vertical bar chart. Each bar represents one day's total consumption.
+     The current day is highlighted in the accent color.
+  
+  c) MONTH View: Shows weekly kWh totals for the current calendar month.
+     Bars represent each week (Week 1, Week 2, Week 3, Week 4).
+  
+  d) YEAR View: Shows monthly kWh totals for the past 12 months.
+     Allows the user to compare months and identify seasonal patterns.
+  
+  Each view also shows:
+  - Peak Load: The maximum power reading during the selected period (kW)
+  - Estimated Bill: Projected monthly bill based on current usage rate (INR)
+
+MODULE 3 - CONTROL CENTER:
+  A dedicated screen for remote appliance management:
+  
+  a) Light Controls: Three toggle switches for Light 1 (Living Room TV Area),
+     Light 2 (Bedroom), Light 3 (Kitchen). Each shows device name, location,
+     current state (ON/OFF), and live Firebase sync status.
+  
+  b) Fan Controls: Two toggle switches for Fan 1 (Living Room) and
+     Fan 2 (Bedroom).
+  
+  c) Active Count Badge: Header shows "3/5 ON" when 3 of 5 devices are active.
+  
+  d) Schedules Button: Floating button at bottom that opens the Schedules
+     screen for creating auto-OFF time schedules.
+  
+  When a toggle is changed in the app, it writes immediately to Firebase RTDB:
+    /devices/METER001/controls/light1 = true (or false)
+  The mqtt_sync.py bridge detects this change and publishes to MQTT:
+    topic: "METER001/controls", payload: {"light1":true}
+  The ESP8266 receives the command and sets the relay GPIO accordingly,
+  physically switching the circuit ON or OFF within 1-2 seconds.
+
+MODULE 4 - SCHEDULES:
+  Automated device control scheduling:
+  
+  a) Create Schedule: User selects a device (Light 1/2/3, Fan 1/2) and
+     sets an auto-OFF time using a material time picker dialog.
+  
+  b) Schedule Execution: At the designated time, the AlertService checks
+     all active schedules and automatically sets the device state to false
+     in Firebase, triggering the MQTT bridge to physically turn off the
+     device.
+  
+  c) View Schedules: A list card for each active schedule showing:
+     Device name + icon, scheduled time, enabled/disabled toggle.
+  
+  d) Delete Schedule: Swipe or tap trash icon to remove a schedule.
+  
+  Schedule data stored in Firebase RTDB:
+    /schedules/{scheduleId}: {device:"light1", offTime:"22:30", isEnabled:true}
+
+MODULE 5 - BILL & SAVINGS:
+  Electricity bill management and payment:
+  
+  a) Bill Card: Displays the current month's electricity bill with:
+     - Month and year (e.g., "March 2026")
+     - Total amount (e.g., "Rs. 842.50")
+     - Due date (e.g., "Due: 15 April 2026")
+     - Payment status indicator (PAID/UNPAID with color coding)
+  
+  b) Bill Breakdown: Itemized breakdown showing:
+     - Units consumed: 245 kWh
+     - Energy charges: Rs. 695.00 (at KSEB LT-IA slab rates)
+     - Service charge: Rs. 50.00
+     - Electricity duty (10%): Rs. 69.50
+     - Meter rent: Rs. 28.00
+     - Total: Rs. 842.50
+  
+  c) Pay Now Button: Launches Razorpay checkout with the bill amount.
+     Razorpay supports: UPI (PhonePe, GPay, Paytm), Credit/Debit Cards
+     (Visa, Mastercard, RuPay), Net Banking (all major banks), Wallets.
+     On successful payment, a record is written to Cloud Firestore and
+     the bill status updates to "PAID" in the UI.
+  
+  d) Smart Savings Tips: Two AI-generated saving suggestions based on
+     current usage patterns:
+     - Phantom Power: "Your standby devices consume 45W. Unplugging them
+       could save Rs. 32/month."
+     - AC Schedule: "Set your AC to auto-off at 1AM to save Rs. 120/month."
+
+MODULE 6 - NOTIFICATIONS (SMART ALERTS):
+  Intelligent alert system with 4 alert types:
+  
+  a) CRITICAL Alert (red): Triggered when power > 3.5 kW sustained for
+     more than 5 minutes. Message: "Critical Power Usage Detected!
+     Your home is consuming 4.2 kW which is extremely high. Check for
+     faulty appliances or left-on equipment."
+  
+  b) WARNING Alert (orange): Triggered by:
+     - Bill milestone: when estimated monthly bill crosses Rs. 500, 1000, 1500
+     - Idle auto-off: when a device has been ON with no change for > 30 min
+     Example: "Fan 2 has been running for 45 minutes idle. Auto-off applied."
+  
+  c) INFO Alert (blue): General informational messages such as:
+     - "Your energy usage this week is 15% lower than last week. Well done!"
+     - "New KSEB notice: Scheduled maintenance on 12 March 2026."
+  
+  d) RESOLVED Alert (green): When an anomaly self-corrects or a previously
+     raised issue is resolved.
+     Example: "Power usage has returned to normal levels (1.1 kW)."
+  
+  Alerts are stored in Firebase RTDB: /alerts/{userId}/{alertId}
+  and delivered as push notifications via Firebase Notifications.
+  
+  Users can tap any alert to mark it as read (isRead = true).
+  Unread alerts show a badge count on the Notifications tab.
+
+MODULE 7 - PROFILE & SETTINGS:
+  User account management and app configuration:
+  
+  a) Profile Information: Displays user's profile photo (Google photo or
+     Firebase avatar), full name, email address, and account type (User).
+  
+  b) Edit Name: Tap to edit display name, saved immediately to Firestore.
+  
+  c) Change Email: Requires re-authentication with current password first.
+     Sends verification email to new address before updating.
+  
+  d) Change Password: Secure flow requiring current password for
+     re-authentication, then setting a new minimum-6-character password.
+  
+  e) Dark Mode Toggle: Switches between dark (#0A0E1A bg) and light themes.
+     Preference persisted via shared_preferences for the next app launch.
+  
+  f) Push Notifications Toggle: Enable/disable smart alert push notifications.
+  
+  g) Share Usage Data Toggle: Privacy setting for anonymized data sharing.
+  
+  h) Register Complaint: Opens complaint submission form with subject and
+     description fields. Submitted complaints saved to Cloud Firestore
+     /complaints collection and viewable by assigned KSEB Officer.
+  
+  i) Log Out: Confirmation dialog -> signs out from Firebase Auth -> 
+     navigates back to Login screen.
+
+MODULE 8 - ADMIN DASHBOARD:
+  Administrative panel for system management (admin role only):
+  
+  a) User Management: List of all registered users with name, email, role,
+     and active/inactive status. Admin can tap any user to view their
+     energy consumption data or toggle their account status.
+  
+  b) Meter Management: List of all registered smart meters (METER001, etc.)
+     with owner, address, firmware version, and online/offline status.
+  
+  c) Assign Officers: Interface to assign KSEB Officers to consumer accounts.
+     Admin selects a consumer and assigns an officer from the officer list.
+  
+  d) KSEB Consumer List: Full list of all consumers served by KSEB in the
+     system, with their meter IDs and assigned officer information.
+
+MODULE 9 - KSEB OFFICER DASHBOARD:
+  Field officer management interface (kseb_officer role only):
+  
+  a) Consumer List: List of all consumers assigned to this specific officer,
+     with their address, meter ID, and recent consumption data.
+  
+  b) Complaints Management: List of open complaints from assigned consumers.
+     Officer can tap a complaint to view details and update status
+     (open -> in_progress -> resolved) with a resolution note.
+  
+  c) Service Requests: Pending service requests (new meter, meter repair,
+     supply restoration) from assigned consumers.
+  
+  d) Notices: Interface to post official KSEB notices to all consumers.
+     Notices appear in the consumer's Notifications screen as INFO alerts.
+
+2.5 ADVANTAGES OF PROPOSED SYSTEM
+
+The WattX proposed system offers the following specific, measurable
+advantages over the existing conventional system:
+
+ADVANTAGE 1 - REAL-TIME ENERGY MONITORING (2-SECOND UPDATES):
+WattX provides live electricity data updated every 2 seconds. Users can see
+their exact power draw in kW at any moment from their smartphone, anywhere
+in the world. This is a transformative improvement over the monthly-reading
+model of conventional meters. Users can immediately identify which appliances
+are consuming the most and make instant decisions to reduce waste.
+
+ADVANTAGE 2 - REMOTE APPLIANCE CONTROL FROM ANYWHERE:
+Users can toggle any of the 5 controlled appliances (Light 1/2/3, Fan 1/2)
+from their smartphone, regardless of location. Control commands travel from
+the app to Firebase to MQTT to the ESP8266 relay in under 2 seconds via the
+internet. This eliminates all instances of "forgot to switch off" scenarios.
+
+ADVANTAGE 3 - INTELLIGENT ANOMALY DETECTION WITH 7-DAY ROLLING AVERAGE:
+WattX's AnomalyService computes the 7-day rolling average of power consumption
+and continuously compares it to the real-time reading. The classification
+algorithm provides contextual, actionable anomaly banners (efficient, normal,
+high, critical) rather than raw numbers that consumers cannot interpret.
+
+ADVANTAGE 4 - SMART ALERTS PREVENT BILL SHOCK:
+By sending mid-cycle alerts when the estimated bill crosses Rs. 500, Rs. 1000,
+and Rs. 1500, WattX gives consumers the opportunity to reduce usage before
+the bill is finalized. Studies show that real-time feedback can reduce energy
+consumption by 10-15% on average.
+
+ADVANTAGE 5 - AUTOMATED DEVICE SCHEDULING:
+Users can schedule devices to automatically turn off at specific times
+(e.g., Fan auto-OFF at 11 PM). This feature alone can save 1-2 kWh per
+night per device (approximately Rs. 4-8 per night, Rs. 120-240 per month).
+
+ADVANTAGE 6 - COMPREHENSIVE ANALYTICS AND INSIGHTS:
+Interactive charts across Day/Week/Month/Year help users identify patterns
+(e.g., "My electricity consumption spikes on weekends", "My AC is the highest
+consumer in summer months"). This long-term visibility enables lifestyle
+changes that lead to sustained energy savings.
+
+ADVANTAGE 7 - INTEGRATED RAZORPAY BILL PAYMENT:
+Users can pay their electricity bill directly within the WattX app using UPI,
+cards, or net banking without visiting a KSEB office or using a separate
+app/portal. Payment is processed in under 5 seconds and the bill status
+updates instantly in the app.
+
+ADVANTAGE 8 - DIGITIZED COMPLAINT AND SERVICE REQUEST SYSTEM:
+Consumers can submit, track, and receive updates on KSEB complaints directly
+through the app. Officers see complaints in their dashboard and update
+statuses. This eliminates the need for phone calls or office visits for
+routine complaint management.
+
+ADVANTAGE 9 - ROLE-BASED ACCESS CONTROL FOR MULTIPLE STAKEHOLDERS:
+WattX's three-tier role system (User/KSEB Officer/Admin) creates a digital
+ecosystem for all stakeholders in the electricity supply chain. Admins
+manage the system, Officers manage consumers, and consumers manage their
+personal energy usage - all within the same unified platform.
+
+ADVANTAGE 10 - AFFORDABLE AND SCALABLE IoT SOLUTION:
+The hardware cost (ESP8266 + PZEM-004T sensor + relay module) is under
+INR 700 per household, making WattX accessible to budget-conscious Indian
+families. The Firebase Spark free tier supports up to 100 simultaneous
+connections and 1 GB of Realtime Database storage, which is sufficient for
+a residential deployment with dozens of meters.

@@ -1079,33 +1079,53 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildMetricsGrid(ReadingModel? reading) {
+    final bool hasData = reading != null;
     return GridView.count(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       crossAxisCount: 2,
       mainAxisSpacing: 12,
       crossAxisSpacing: 12,
-      childAspectRatio: 1.4, // Shallower cards
+      childAspectRatio: 1.4,
       padding: EdgeInsets.zero,
       children: [
         _buildMetricCard(
             'Voltage',
-            reading?.voltage.toStringAsFixed(1) ?? '0.0',
+            hasData ? reading.voltage.toStringAsFixed(1) : '--',
             'V',
-            Icons.bolt_rounded),
+            Icons.bolt_rounded,
+            isLive: hasData),
         _buildMetricCard(
             'Current',
-            reading?.current.toStringAsFixed(2) ?? '0.00',
+            hasData ? reading.current.toStringAsFixed(3) : '--',
             'A',
-            Icons.electric_meter_rounded),
-        _buildMetricCard('Frequency', '50.1', 'Hz', Icons.waves_rounded),
-        _buildMetricCard('Power Factor', '0.98', 'φ', Icons.speed_rounded),
+            Icons.electric_meter_rounded,
+            isLive: hasData),
+        _buildMetricCard('Frequency', '50.0', 'Hz', Icons.waves_rounded,
+            isLive: false),
+        _buildMetricCard(
+            'Power Factor',
+            hasData
+                ? reading.power > 0
+                    ? (reading.power /
+                            ((reading.voltage > 0 ? reading.voltage : 230.0) *
+                                (reading.current > 0
+                                    ? reading.current
+                                    : 0.001)))
+                        .clamp(0.0, 1.0)
+                        .toStringAsFixed(2)
+                    : '1.00'
+                : '--',
+            'φ',
+            Icons.speed_rounded,
+            isLive: hasData),
       ],
     );
   }
 
   Widget _buildMetricCard(
-      String title, String value, String unit, IconData icon) {
+      String title, String value, String unit, IconData icon,
+      {bool isLive = true}) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(16),
@@ -1122,14 +1142,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
             children: [
               Icon(icon, color: AppTheme.primaryGold, size: 20),
               const SizedBox(width: 8),
-              Text(
-                title,
-                style: GoogleFonts.inter(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: isDark ? Colors.white54 : Colors.black38,
+              Expanded(
+                child: Text(
+                  title,
+                  style: GoogleFonts.inter(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? Colors.white54 : Colors.black38,
+                  ),
                 ),
               ),
+              // Live indicator dot
+              if (isLive)
+                Container(
+                  width: 7,
+                  height: 7,
+                  decoration: const BoxDecoration(
+                    color: Colors.greenAccent,
+                    shape: BoxShape.circle,
+                  ),
+                ),
             ],
           ),
           const SizedBox(height: 8),
@@ -1139,18 +1171,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
               Text(
                 value,
                 style: GoogleFonts.inter(
-                  fontSize: 18,
+                  fontSize: 22,
                   fontWeight: FontWeight.w800,
-                  color: isDark ? Colors.white : AppTheme.midnightCharcoal,
+                  color: value == '--'
+                      ? (isDark ? Colors.white24 : Colors.black26)
+                      : (isDark ? Colors.white : AppTheme.midnightCharcoal),
                 ),
               ),
               const SizedBox(width: 4),
-              Text(
-                unit,
-                style: GoogleFonts.inter(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
-                  color: isDark ? Colors.white38 : Colors.black26,
+              Padding(
+                padding: const EdgeInsets.only(bottom: 3),
+                child: Text(
+                  unit,
+                  style: GoogleFonts.inter(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? Colors.white38 : Colors.black26,
+                  ),
                 ),
               ),
             ],
