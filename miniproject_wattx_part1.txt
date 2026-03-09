@@ -82,16 +82,44 @@ for the moral support and encouragement to make this venture a success.
 ABSTRACT
 ------------------------------------------------------------
 
-WattX is an IoT-based smart energy monitoring mobile application developed
-using Flutter and Firebase. It enables real-time monitoring of household
-electricity consumption by integrating IoT smart meters via MQTT protocol.
-The application provides live metrics including power (kW), voltage (V),
-current (A), power factor, and frequency. Users can remotely control home
-appliances (lights and fans), view interactive analytics charts, receive
-smart alerts for anomalies and overage usage, schedule automatic device
-shutdowns, and pay electricity bills via Razorpay. The system supports
-role-based access for Users, KSEB Officers, and Admins. Firebase Realtime
-Database enables real-time synchronization between the IoT device and app.
+WattX is an Internet of Things (IoT) based smart energy monitoring system
+designed to provide domestic consumers with real-time visibility and control
+over their electricity consumption. The system combines an IoT smart energy
+meter, a secure cloud backend, and a user-friendly Android mobile
+application. The hardware unit, built around an ESP8266 microcontroller and
+PZEM-004T energy sensor, continuously measures electrical parameters such as
+voltage (V), current (A), active power (kW), power factor, and frequency,
+and publishes these readings to an MQTT broker at fixed intervals.
+
+On the software side, the Flutter-based WattX mobile application connects to
+Firebase Realtime Database, where the live meter readings are stored by a
+Python MQTT bridge. The app visualizes this data through an interactive
+dashboard and analytics module, enabling users to monitor instantaneous
+consumption as well as daily, weekly, monthly, and yearly energy trends.
+In addition to monitoring, WattX allows remote control of selected home
+appliances (lights and fans) through relay outputs on the IoT meter; any
+change initiated from the app is reflected in Firebase and propagated back
+to the hardware in near real time. Smart alerts are generated for anomaly
+conditions, such as sudden spikes compared to a 7‑day rolling average,
+crossing user-defined budget thresholds, or prolonged idle usage.
+
+The system further integrates a basic billing and payments module that
+converts measured kWh into an estimated bill using configurable tariff
+slabs and supports online bill payment through the Razorpay payment
+gateway. Role-based access control is implemented to differentiate between
+Regular Users, KSEB Officers, and Administrators, each with dedicated
+dashboards for monitoring, complaint management, notice publishing, and
+user administration. By leveraging Firebase Authentication, Firebase
+Realtime Database, and Cloud Firestore, WattX achieves secure, scalable,
+and low-cost deployment without the need for on-premise servers.
+
+This mini project demonstrates the end-to-end implementation of a complete
+IoT stack – from field-level sensing and MQTT-based data acquisition to
+cloud storage, mobile UI, and digital payments. The proposed solution aims
+to reduce electricity wastage, prevent bill shocks through timely alerts,
+and improve consumer convenience by unifying monitoring, control, billing,
+and complaint handling in a single application tailored for KSEB domestic
+consumers.
 
 ------------------------------------------------------------
 CONTENT TABLE
@@ -213,22 +241,91 @@ Key features:
 - Firebase Authentication (Email/Password + Google Sign-In)
 - Role-based routing and access control
 
+Major objectives of WattX:
+- Provide low-cost, real-time visibility of household energy usage for
+  ordinary consumers using only a smartphone and a compact IoT meter.
+- Help users actively reduce their electricity bill by giving actionable
+  analytics, budget alerts, and energy-saving tips instead of just raw data.
+- Offer a unified platform for monitoring, control, billing, and complaints
+  so that users do not need separate apps or manual visits to KSEB offices.
+- Demonstrate a complete IoT stack (hardware + MQTT + cloud backend + mobile
+  app) that can be extended to solar and smart home scenarios.
+
+Scope of the project (what WattX covers):
+- Single-phase domestic consumers connected to KSEB, using one smart meter
+  (METER001) per household in the prototype.
+- Monitoring of instantaneous parameters (power, voltage, current, power
+  factor, frequency) and aggregated kWh per day/week/month/year.
+- Control of up to five relay-based loads (three lights and two fans).
+- Basic billing simulation with configurable tariff slabs and integration
+  to Razorpay in test mode for secure digital payments.
+- Role-based dashboards for three roles (User, KSEB Officer, Admin) covering
+  day-to-day operations like complaints, notices, and user management.
+
+Items outside current scope (but possible in future):
+- Three-phase industrial meters, detailed tariff integration with official
+  KSEB APIs, and direct integration into KSEB production systems.
+- Native iOS application and web portal (current prototype targets Android).
+- Advanced AI-based non-intrusive load monitoring (NILM) for automatic
+  appliance identification.
+
 1.2 PROJECT SPECIFICATION
 
-Application Name    : WattX - Smart Energy Monitor
-Platform            : Android (Flutter)
-Language            : Dart
-Version             : 2.4.0 | Build 132
-Database            : Firebase Realtime Database + Cloud Firestore
-Authentication      : Firebase Auth (Email/Password, Google Sign-In)
-State Management    : Provider pattern
-Payment Gateway     : Razorpay Flutter SDK v1.4.1
-IoT Protocol        : MQTT (via mqtt_sync.py Python bridge)
-Charts Library      : fl_chart v0.70.2
-Fonts               : Google Fonts - Inter
-Meter ID (default)  : METER001
-MQTT Broker         : HiveMQ Cloud (free tier, port 8883 TLS)
-Minimum Android SDK : API 21 (Android 5.0)
+WattX is a mobile-based Smart Energy Monitoring System developed to connect
+domestic consumers, smart meters, KSEB officers, and administrators on a
+single integrated platform. The project focuses on real-time electricity
+monitoring, remote appliance control, bill estimation and payment, and
+digital management of complaints and notices, using a low-cost IoT meter
+and a cloud-backed Flutter application.
+
+Technology Stack Used
+• Frontend: Flutter (Dart) Android application
+• Backend: Firebase Realtime Database and Cloud Firestore
+• Authentication: Firebase Authentication (Email/Password, Google Sign-In)
+• IoT Bridge: Python 3 (mqtt_sync.py) with paho-mqtt
+• Messaging: MQTT protocol via HiveMQ Cloud broker (TLS, port 8883)
+• Payment Gateway: Razorpay Flutter SDK (test mode in prototype)
+• Charts & UI: fl_chart, Google Fonts (Inter), Provider for state management
+• Tools & IDE: Android Studio / VS Code, Git & GitHub for version control
+
+User Roles
+• Admin – Manages all users and smart meters, assigns KSEB officers to
+  consumers, configures tariff slabs, monitors alerts and usage trends,
+  and oversees overall system health from the admin dashboard.
+• KSEB Officer – Views assigned consumers, tracks their complaints and
+  service requests, updates complaint status, and publishes notices or
+  announcements relevant to their service area.
+• User (Consumer) – Registers and logs in to the app, views real-time
+  energy usage, controls connected appliances, checks analytics charts,
+  views and pays simulated electricity bills, manages schedules, and
+  submits complaints or feedback.
+
+Key Modules
+• Authentication & Role-Based Access Control
+• Real-Time Dashboard & IoT Device Monitoring
+• Appliance Control & Scheduling (Lights and Fans)
+• Energy Analytics & Bill Estimation
+• Smart Notifications & Anomaly Alerts
+• User Profile & Settings (including dark mode)
+• Admin Dashboard (user and meter management, tariff configuration)
+• KSEB Officer Dashboard (consumer list, complaints, notices)
+
+Security & Performance
+• Secure login and session handling using Firebase Authentication tokens.
+• Role-based authorization enforced in the app and Firebase Security Rules
+  so that users can only access their own data, while Admin and KSEB
+  Officer roles have controlled elevated privileges.
+• Encrypted communication via HTTPS for Firebase services and TLS-secured
+  MQTT connections to HiveMQ Cloud and Razorpay payment gateway.
+• Centralized cloud database with input validation and data sanitization
+  for user forms, device commands, and billing data.
+• Optimized real-time listeners and lightweight UI design to ensure smooth
+  performance on low- and mid-range Android devices.
+
+WattX thus provides a secure, scalable, and cost-effective smart energy
+monitoring solution that improves household energy awareness, reduces
+manual processes, and enhances coordination between consumers and KSEB
+through a unified digital platform.
 
 ==============================================================
 CHAPTER 2 - SYSTEM STUDY
@@ -236,38 +333,39 @@ CHAPTER 2 - SYSTEM STUDY
 
 2.1 INTRODUCTION
 
-A system study analyzes the needs and problems of existing energy monitoring
-systems, identifies their drawbacks, and designs an improved solution. Energy
-consumption management is critical today due to rising electricity tariffs
-and increased environmental awareness. Traditional electricity meters only
-show cumulative kWh consumption with no real-time feedback, analytics, or
-remote control. This gap is exactly what WattX aims to fill.
+System study involves analyzing the present method of household electricity
+monitoring and billing, identifying its limitations, and designing a better
+digital solution. In WattX, the study focuses on understanding how domestic
+consumers currently read their meters, receive bills, manage energy usage,
+and register complaints with KSEB, and how these activities can be brought
+together into a single smart energy monitoring platform.
 
 2.2 EXISTING SYSTEM
 
+In most households, electricity usage is tracked using traditional meters
+installed by KSEB. Meter readings are taken manually once in a billing
+cycle, and consumers receive only a final bill amount without real-time
+feedback or detailed analytics. Complaints and service requests are usually
+handled through physical visits or phone calls, and there is no integrated
+system for monitoring usage, paying bills, and managing complaints from a
+single interface.
+
 2.2.1 NATURAL SYSTEM STUDIED
 
-The conventional household electricity metering system consists of an
-electromechanical or digital energy meter installed by the utility board
-(KSEB). The meter records cumulative energy in kWh. A meter reader visits
-the household monthly to record readings and bills are generated manually.
-There is no real-time data, no remote monitoring, and no mobile interface.
-Consumers receive bill statements via post or utility portals showing only
-monthly totals, with no way to know per-appliance consumption or get alerts
-when usage crosses a threshold.
+The natural system studied is the conventional electricity metering and
+billing process where cumulative kWh readings, bill generation, complaint
+registration, and basic consumer interactions with KSEB are managed using
+paper-based records, manual meter reading, and separate portals or offices
+without real-time visibility of consumption.
 
 2.2.2 DESIGNED SYSTEM STUDIED
 
-Several commercial smart home energy monitors exist:
-- Sense Home Energy Monitor: Uses ML to identify appliances but is expensive
-  (USD 300+) and not available in India with KSEB integration.
-- Shelly EM: European IoT energy monitor with cloud integration but lacks
-  a consumer-facing mobile app in Malayalam/local context.
-- KSEB Smart Meters (pilot): Rolling out in select areas of Kerala but
-  without a consumer-facing mobile application for real-time monitoring.
-
-These systems lack affordability, local availability, KSEB integration,
-or mobile-first design for Indian consumers.
+Some commercial smart home energy monitors and pilot smart meters by KSEB
+were also studied. These systems provide partial digital features such as
+online bill viewing or basic usage graphs, but they often lack full
+integration with IoT smart meters, real-time appliance control, anomaly
+alerts, or role-based dashboards for consumers, officers, and admins in the
+local Kerala context.
 
 2.3 DRAWBACKS OF EXISTING SYSTEM
 
@@ -283,31 +381,15 @@ or mobile-first design for Indian consumers.
 
 2.4 PROPOSED SYSTEM
 
-WattX is a comprehensive IoT-based smart energy monitoring solution tailored
-for Indian households connected to KSEB.
-
-HARDWARE COMPONENT:
-A smart IoT energy meter based on an ESP8266/ESP32 microcontroller with a
-PZEM-004T energy sensor that measures voltage, current, power, and power
-factor in real time. The device publishes readings to an MQTT broker every
-2 seconds with meter ID METER001.
-
-SOFTWARE COMPONENT:
-A Flutter Android application connected to Firebase Realtime Database.
-A Python MQTT bridge script (mqtt_sync.py) subscribes to the MQTT broker
-and writes incoming IoT data to Firebase. The mobile app reads from Firebase
-in real-time and displays live metrics.
-
-KEY MODULES:
-1. Dashboard        : Real-time kW, voltage, current, frequency, power factor
-2. Analytics        : Charts with Day/Week/Month/Year filter tabs
-3. Control Center   : Toggle lights and fans with live IoT sync
-4. Schedules        : Set auto-OFF device schedules
-5. Bill & Savings   : View monthly bill, pay via Razorpay, savings tips
-6. Notifications    : Smart alerts for anomalies, overage, idle auto-off
-7. Profile          : Edit name, email, password, dark mode toggle
-8. Admin Dashboard  : Manage users, meters, assign officers
-9. KSEB Officer     : Handle complaints, service requests, notices
+The proposed system, WattX Smart Energy Monitor, is a fully integrated
+IoT-based application that connects smart meters, domestic consumers, KSEB
+officers, and admins on a single digital platform. It uses an ESP8266/ESP32
+based smart meter with a PZEM-004T sensor to measure electrical parameters
+in real time and publish them via MQTT to the cloud. A Flutter Android app
+reads the live data from Firebase, displays real-time dashboards and
+analytics charts, provides appliance control and scheduling, generates
+estimated bills with Razorpay payment support, manages complaints and
+notices, and offers role-based dashboards for users, officers, and admins.
 
 2.5 ADVANTAGES OF PROPOSED SYSTEM
 
@@ -322,67 +404,217 @@ KEY MODULES:
 - Role-based access system for Users, KSEB Officers, and Admins
 - Secure Firebase Authentication with Google Sign-In support
 
+These advantages, combined with a cloud-native architecture using Firebase
+and a managed MQTT broker, reduce manual effort, minimize errors, and
+improve overall energy awareness and service quality for KSEB domestic
+consumers.
+
 ==============================================================
 CHAPTER 3 - REQUIREMENT ANALYSIS
 ==============================================================
 
 3.1 FEASIBILITY STUDY
 
-Before development of WattX, a feasibility study confirmed that the project
-is viable from economic, technical, and behavioral perspectives.
+The feasibility study examines whether WattX - Smart Energy Monitor can be
+practically developed, deployed, and maintained in a real household and
+utility-support environment. WattX integrates multiple functions such as
+real-time electricity monitoring, appliance control, bill estimation,
+digital payment, smart alerts, complaint handling, and role-based access
+for consumers, KSEB officers, and administrators. The feasibility analysis
+evaluates technical, operational, and economic factors to determine whether
+the system is realistic, viable, and beneficial.
+
+Objectives of the Feasibility Study
+
+- To analyze whether WattX meets the needs of domestic electricity consumers
+  and improves the current monitoring and billing workflow.
+- To verify whether the system can be implemented using available tools,
+  cloud services, IoT hardware, and development resources.
+- To check whether WattX integrates smoothly with smart meters, Firebase,
+  MQTT messaging, payment services, and KSEB-related complaint handling.
+- To assess the usability of the system for consumers, KSEB officers, and
+  administrators.
+- To understand the cost implications and long-term operational benefits of
+  adopting a low-cost smart energy monitoring platform.
+
+Information Assessment
+
+During analysis, the following questions are considered:
+- What problems do households face without a real-time digital energy
+  monitoring system?
+- How will WattX reduce manual effort, delayed billing awareness, and
+  unnecessary electricity wastage?
+- What contribution does WattX make toward consumer energy awareness and
+  service quality improvement?
+- Can the system securely exchange data between the IoT smart meter, cloud
+  database, mobile application, and payment gateway?
+- Is additional hardware or advanced infrastructure required beyond a smart
+  meter, smartphone, and internet connection?
+- Which functions must be supported immediately, and which ones can be
+  improved or expanded in future versions?
 
 3.1.1 ECONOMICAL FEASIBILITY
 
-WattX uses entirely free and open-source tools:
-- Flutter SDK: Free and open-source (Apache License 2.0)
-- Firebase Spark Plan: Free (1 GB RTDB, Auth, Notifications)
-- Python 3.x: Free and open-source
-- HiveMQ Free Tier: Free MQTT broker (up to 100 simultaneous connections)
-- VS Code / Android Studio: Free development IDEs
-- Razorpay test sandbox: No charges during development
+This determines whether the system is cost-effective and beneficial in the
+long run.
 
-Hardware cost for one IoT smart meter unit (ESP8266 + PZEM-004T) is
-approximately INR 500-700, compared to commercial alternatives at
-INR 5,000-15,000. The project is economically feasible.
+Costs involved:
+- IoT hardware development using ESP8266/ESP32 and PZEM-004T sensor
+- Mobile app design, development, testing, and Firebase setup
+- MQTT broker configuration and Python bridge deployment
+- Security implementation, authentication, and database rules
+- Maintenance, bug fixing, and periodic updates
+- User guidance and minimal training for consumers and operators
+
+Benefits:
+- Reduced electricity wastage through real-time monitoring and alerts
+- Lower dependency on manual follow-up for billing awareness and usage
+  tracking
+- Reduced paperwork and fewer manual complaint handling steps
+- Affordable hardware cost compared to commercial smart monitoring systems
+- Faster access to consumption data, bills, and notifications in one app
+- Improved coordination between users, KSEB officers, and admins
+- Better long-term savings for consumers through energy analytics and
+  timely overage detection
+
+WattX uses mostly free and open-source tools such as Flutter, Firebase
+Spark plan, Python, and HiveMQ free tier during development. The hardware
+cost for one smart meter unit is approximately INR 500-700, which is much
+lower than many commercial smart energy systems. Therefore, WattX is
+economically feasible.
 
 3.1.2 TECHNICAL FEASIBILITY
 
-All technologies in WattX are mature, widely adopted, and well-documented:
-- Flutter: Google's cross-platform framework (150,000+ GitHub stars)
-- Firebase: Google's BaaS with 99.99% uptime SLA and global CDN
-- MQTT: ISO standard (ISO/IEC 20922) lightweight IoT messaging protocol
-- Razorpay: Supports all major Indian payment methods (UPI, cards, wallets)
-- Development team has hands-on experience with all listed technologies
+This examines whether the technology and resources required for WattX are
+available and sufficient.
 
-Technical feasibility is confirmed.
+Findings:
+- WattX can be built using widely supported technologies such as:
+  Flutter and Dart for mobile app development
+  Firebase Realtime Database and Cloud Firestore for cloud backend
+  Firebase Authentication for secure login and role-based access
+  MQTT protocol and HiveMQ Cloud for IoT messaging
+  Python with paho-mqtt for the MQTT-Firebase bridge
+  Razorpay for digital payment integration
+- Features such as live energy monitoring, analytics charts, appliance
+  control, schedules, smart alerts, and bill payment can be implemented
+  using established tools and services.
+- Consumers, KSEB officers, and admins can access the system using Android
+  devices with normal internet connectivity.
+- No advanced infrastructure is required beyond the smart meter hardware,
+  WiFi access, and a standard Android smartphone.
+
+Key technical risks and mitigation strategies:
+- Network interruptions can temporarily affect real-time updates. This is
+  handled by showing the latest available reading timestamp and reconnecting
+  automatically when connectivity returns.
+- MQTT broker or Firebase service interruptions may affect data flow.
+  Managed cloud services and reconnection logic in the Python bridge reduce
+  this risk.
+- Low-end mobile devices may have limited performance. WattX uses a
+  lightweight UI and optimized listeners to keep the app responsive.
+
+WattX is technically feasible, as all required technologies are mature,
+stable, well documented, and available.
 
 3.1.3 BEHAVIORAL FEASIBILITY
 
-A survey was conducted among 30 students and household members:
-- 87% were concerned about rising electricity bills
-- 73% said they would use a mobile app to monitor electricity
-- 90% expressed interest in remote appliance control
-- 83% wanted smart alerts for unusual consumption spikes
-- 77% preferred digital bill payment over visiting a KSEB office
+In the case of WattX, the system is designed with a simple, user-friendly,
+and responsive mobile interface so that it can be easily used by domestic
+consumers, KSEB officers, and administrators.
 
-Results confirm strong user interest in the proposed system.
+User-Friendly Interface
+The application provides clear navigation, dedicated dashboards for each
+role, and simple controls for live monitoring, appliance switching,
+analytics viewing, bill payment, and complaint submission. Consumers can
+easily understand their energy usage without technical knowledge.
+
+Minimal Training Requirement
+Basic knowledge of smartphone usage is sufficient to operate the system.
+Only short guidance is needed for users to understand live readings,
+notifications, schedule creation, and digital payment features.
+
+Improved User Experience
+Real-time energy updates, smart anomaly alerts, digital bill estimation,
+remote control of lights and fans, and complaint tracking improve overall
+convenience and reduce dependency on manual processes.
+
+Role-Based Simplicity
+Each user can access only the functions relevant to their role. Consumers
+see monitoring and control features, KSEB officers manage complaints and
+notices, and admins handle user and meter management. This reduces
+confusion and ensures smooth system operation.
+
+Increased User Confidence
+Secure login, controlled access, and cloud-based data handling improve user
+trust in the system and support safe management of energy and billing data.
+
+Short usability walkthroughs and feedback from potential users showed strong
+interest in features such as real-time monitoring, remote appliance control,
+and digital bill payment. Hence, WattX is behaviorally feasible.
 
 3.1.4 FEASIBILITY STUDY QUESTIONNAIRE
 
-Q1. Are you aware of your household's real-time electricity consumption?
-    [ ] Yes    [X] No    [ ] Partially
+1. How do you currently monitor household electricity usage?
+Electricity usage is generally checked only through the monthly meter
+reading or final electricity bill. This makes it difficult for users to
+understand daily consumption patterns or identify sudden increases in usage.
 
-Q2. Do you receive alerts when electricity usage is unusually high?
-    [ ] Yes    [X] No    [ ] Sometimes
+2. What difficulties do you face in tracking electricity consumption?
+Consumers often do not know how much power is being used at a specific time
+or which periods lead to higher bills. This causes poor energy planning,
+unexpected bill amounts, and limited awareness of wastage.
 
-Q3. Would you use a mobile app to monitor energy usage in real time?
-    [X] Yes    [ ] No    [ ] Maybe
+3. How are electricity bills currently checked and paid?
+Bills are usually viewed through printed statements, utility portals, or
+manual visits to payment centers. This process is less convenient and does
+not provide continuous visibility into ongoing consumption before bill
+generation.
 
-Q4. Would you like to control lights and fans remotely via a mobile app?
-    [X] Yes    [ ] No    [ ] Maybe
+4. What issues arise when trying to control household devices efficiently?
+Lights and fans are normally controlled only through physical switches,
+which means users cannot manage them remotely or schedule automatic switch
+off. This often results in unnecessary energy consumption.
 
-Q5. Would you prefer paying electricity bills through a mobile app?
-    [X] Yes    [ ] No    [ ] Maybe
+5. How are unusual consumption spikes identified at present?
+Most users identify high consumption only after receiving the monthly bill.
+There is no immediate alert mechanism to warn them about abnormal usage,
+faulty devices, or over-limit consumption.
+
+6. What information is needed in a smart energy monitoring system?
+Users need live values such as power, voltage, current, frequency, power
+factor, total usage trends, bill estimation, alert notifications, and basic
+device control status in one place.
+
+7. How are complaints or service issues currently reported to KSEB?
+Complaints are usually reported through office visits, phone calls, or
+separate utility channels. This can be slow, difficult to track, and not
+directly linked to the user’s smart meter or app usage details.
+
+8. What type of monitoring and reports would be useful for administrators?
+Administrators require reports on user activity, smart meter status,
+complaints, alerts, and overall usage trends so they can monitor the system
+and improve service efficiency.
+
+9. What challenges exist in managing energy usage manually?
+Manual monitoring makes it difficult to compare daily or monthly patterns,
+identify waste, or take preventive action before the bill increases.
+Consumers are forced to react late instead of managing energy proactively.
+
+10. How important is secure access control in a smart energy application?
+It is highly important. Different roles such as consumer, KSEB officer, and
+admin need different access levels to protect personal data, billing data,
+and administrative controls from unauthorized access.
+
+11. What improvements would a centralized digital system bring?
+A centralized platform would provide continuous usage visibility, quicker
+complaint handling, digital billing support, better communication with KSEB,
+and more efficient energy management for households.
+
+12. What technology features would help users most?
+Real-time notifications, analytics dashboards, usage history, smart alerts,
+remote appliance control, scheduling, and digital payment options would
+significantly improve user convenience and energy awareness.
 
 3.1.5 GEOTAGGED PHOTOGRAPH
 [Geotagged photograph of project site/review location to be inserted here]
@@ -403,6 +635,13 @@ IoT Smart Meter Device:
   WiFi           : Built-in IEEE 802.11 b/g/n
   Power Supply   : 5V USB or AC adapter
   Communication  : MQTT over WiFi
+
+The ESP8266/ESP32 platform is selected because it combines WiFi, sufficient
+GPIO pins for relay control, and strong community support. The PZEM-004T
+sensor offers galvanic isolation for mains measurement, improving safety.
+The device is placed inside an insulated enclosure, and all high-voltage
+connections are made by a qualified electrician to comply with basic
+electrical safety practices.
 
 Android Test Device:
   OS             : Android 8.0 (API 26) and above
@@ -479,6 +718,18 @@ FIREBASE AUTHENTICATION (firebase_auth ^4.17.0):
 - Password reset via email link
 - Re-authentication before sensitive profile changes
 
+SECURITY AND PRIVACY CONSIDERATIONS:
+- All communication between the app and Firebase uses HTTPS/TLS, and the
+  MQTT connection to HiveMQ Cloud is protected with TLS on port 8883.
+- Firebase Security Rules ensure that users can access only their own data
+  (profiles, alerts, bills); Admin and KSEB Officer roles have additional
+  permissions but are still restricted from arbitrary writes.
+- Authentication tokens and password handling are delegated to Firebase
+  Auth, reducing the risk of implementing insecure custom auth logic.
+- No card or UPI details are stored in WattX. Razorpay handles sensitive
+  payment information and returns only secure transaction identifiers that
+  are stored in Firestore for billing history.
+
 ==============================================================
 CHAPTER 4 - SYSTEM DESIGN
 ==============================================================
@@ -530,7 +781,63 @@ IoT DEVICE use cases:
   Receive device control commands from Firebase via MQTT bridge
   Publish hardware status confirmations
 
-[USE CASE DIAGRAM - INSERT HERE]
+Mermaid code:
+```mermaid
+flowchart LR
+    user([User])
+    officer([KSEB Officer])
+    admin([Admin])
+    device([IoT Device])
+
+    subgraph WattX[WattX Smart Energy Monitor]
+        uc1((Login / Register / Forgot Password))
+        uc2((View Live Dashboard))
+        uc3((View Analytics Charts))
+        uc4((Toggle Appliances))
+        uc5((Create / Delete Device Schedules))
+        uc6((View Smart Notifications))
+        uc7((Pay Electricity Bill))
+        uc8((View Bill Breakdown and Savings Tips))
+        uc9((Edit Profile))
+        uc10((Register Complaint))
+        uc11((View Consumer List))
+        uc12((Manage Complaints))
+        uc13((Handle Service Requests))
+        uc14((Post Notices))
+        uc15((Manage All Users))
+        uc16((Manage Smart Meters))
+        uc17((Assign Officers to Consumers))
+        uc18((Publish Energy Readings))
+        uc19((Receive Device Control Commands))
+        uc20((Publish Hardware Status))
+    end
+
+    user --> uc1
+    user --> uc2
+    user --> uc3
+    user --> uc4
+    user --> uc5
+    user --> uc6
+    user --> uc7
+    user --> uc8
+    user --> uc9
+    user --> uc10
+
+    officer --> uc1
+    officer --> uc11
+    officer --> uc12
+    officer --> uc13
+    officer --> uc14
+
+    admin --> uc1
+    admin --> uc15
+    admin --> uc16
+    admin --> uc17
+
+    device --> uc18
+    device --> uc19
+    device --> uc20
+```
 
 4.2.2 SEQUENCE DIAGRAM
 
@@ -554,7 +861,35 @@ REAL-TIME DASHBOARD UPDATE:
 6. Flutter DashboardScreen onValue listener fires
 7. Widget rebuilds with new values: Power=1.42kW, V=231, A=6.14
 
-[SEQUENCE DIAGRAM - INSERT HERE]
+Mermaid code:
+```mermaid
+sequenceDiagram
+  actor User
+  participant LoginScreen
+  participant AuthService
+  participant FirebaseAuth
+  participant Firestore
+  participant Dashboard
+  participant ESP8266
+  participant HiveMQ
+  participant Bridge as mqtt_sync.py
+  participant RTDB as Firebase RTDB
+
+  User->>LoginScreen: Enter email and password
+  LoginScreen->>AuthService: signIn(email, password)
+  AuthService->>FirebaseAuth: signInWithEmailAndPassword()
+  FirebaseAuth-->>AuthService: UserCredential
+  AuthService->>Firestore: Read user role
+  Firestore-->>AuthService: role
+  AuthService-->>LoginScreen: Authentication success
+  LoginScreen-->>Dashboard: Navigate by role
+
+  ESP8266->>HiveMQ: Publish METER001/readings
+  HiveMQ->>Bridge: Forward MQTT message
+  Bridge->>RTDB: Write /readings/METER001/latest
+  RTDB-->>Dashboard: onValue update
+  Dashboard-->>User: Show power, voltage, current
+```
 
 4.2.3 STATE CHART DIAGRAM
 
@@ -575,7 +910,30 @@ ALERT STATES:
   Triggered -> Unread (visible in Notifications with badge)
   Unread -> [user taps dismiss] -> Read (alert.isRead = true)
 
-[STATE CHART DIAGRAM - INSERT HERE]
+Mermaid code:
+```mermaid
+stateDiagram-v2
+  [*] --> SplashScreen
+  SplashScreen --> LoginScreen: Not authenticated
+  SplashScreen --> DashboardScreen: Authenticated as user
+  SplashScreen --> AdminDashboardScreen: Authenticated as admin
+  SplashScreen --> KSEBOfficerDashboardScreen: Authenticated as officer
+
+  state DeviceControl {
+    [*] --> OFF
+    OFF --> ON: User taps ON
+    ON --> OFF: User taps OFF
+    ON --> OFF: Schedule triggers
+    ON --> AlertTriggered: Idle or anomaly detected
+    AlertTriggered --> OFF: Auto-off executed
+  }
+
+  state AlertLifecycle {
+    [*] --> Triggered
+    Triggered --> Unread
+    Unread --> Read: User dismisses alert
+  }
+```
 
 4.2.4 ACTIVITY DIAGRAM
 
@@ -609,7 +967,37 @@ START
       -> Show success SnackBar
 END
 
-[ACTIVITY DIAGRAM - INSERT HERE]
+    Mermaid code:
+    ```mermaid
+    flowchart TD
+      A([Start]) --> B[Open WattX App]
+      B --> C[SplashScreen checks auth state]
+      C --> D{Authenticated?}
+      D -->|No| E[Show LoginScreen]
+      D -->|Yes| F[Fetch role from Firestore]
+      F --> G[Route to correct dashboard]
+      E --> H[Enter email and password]
+      H --> I[Tap Login]
+      I --> J{Form valid?}
+      J -->|No| K[Show inline error]
+      J -->|Yes| L[Call Firebase Auth API]
+      L --> M{Auth success?}
+      M -->|No| N[Show SnackBar error]
+      M -->|Yes| F
+      G --> O[Open Bill and Savings Screen]
+      O --> P[View bill card]
+      P --> Q[Tap Pay Now]
+      Q --> R[Razorpay checkout opens]
+      R --> S{Payment success?}
+      S -->|No| T[Show failure dialog]
+      S -->|Yes| U[Write payment to Firestore]
+      U --> V[Update bill status to Paid]
+      V --> W[Show success SnackBar]
+      W --> X([End])
+      K --> E
+      N --> E
+      T --> X
+    ```
 
 4.2.5 CLASS DIAGRAM
 
@@ -687,7 +1075,101 @@ Services:
     + detectAnomaly(current, avg7day): String
       // returns: efficient | normal | high | critical
 
-[CLASS DIAGRAM - INSERT HERE]
+  Mermaid code:
+  ```mermaid
+  classDiagram
+    class UserModel {
+      +String uid
+      +String name
+      +String email
+      +String role
+      +String? phoneNumber
+      +String? address
+      +String? profileImageUrl
+      +double budgetLimit
+      +bool isActive
+      +DateTime? createdAt
+      +fromMap(uid, map) UserModel
+      +toMap() Map
+    }
+
+    class ReadingModel {
+      +double power
+      +double voltage
+      +double current
+      +DateTime timestamp
+      +fromMap(map) ReadingModel
+      +toMap() Map
+    }
+
+    class MeterModel {
+      +String meterId
+      +String ownerUid
+      +String address
+      +String firmwareVersion
+      +String status
+      +DateTime? lastSync
+      +fromMap(id, map) MeterModel
+      +toMap() Map
+    }
+
+    class AlertModel {
+      +String id
+      +String userId
+      +String type
+      +String title
+      +String message
+      +DateTime timestamp
+      +bool isRead
+    }
+
+    class BillModel {
+      +String userId
+      +int month
+      +int year
+      +double totalKWh
+      +double amount
+      +bool isPaid
+      +DateTime dueDate
+    }
+
+    class AuthService {
+      +signIn(email, pw) Future
+      +signUp(name, email, pw) Future
+      +googleSignIn() Future
+      +signOut() Future
+      +sendPasswordReset(email) Future
+    }
+
+    class DatabaseService {
+      +getLatestReading() Stream
+      +toggleDevice(key, value) Future
+      +getAnalytics(period) Future
+      +getActiveSchedules() Stream
+      +createSchedule(device, time) Future
+    }
+
+    class AlertService {
+      +checkOverageAlert(power) void
+      +checkIdleAlert(device) void
+      +checkBillAlert(kWh) void
+    }
+
+    class AnomalyService {
+      +detectAnomaly(current, avg7day) String
+    }
+
+    UserModel --> MeterModel : owns
+    UserModel --> AlertModel : receives
+    UserModel --> BillModel : pays
+    MeterModel --> ReadingModel : generates
+    AuthService ..> UserModel : authenticates
+    DatabaseService ..> ReadingModel : reads
+    DatabaseService ..> MeterModel : updates
+    AlertService ..> AlertModel : creates
+    AlertService ..> ReadingModel : evaluates
+    AnomalyService ..> ReadingModel : analyzes
+  ```
 
 4.2.6 OBJECT DIAGRAM
 
@@ -713,7 +1195,16 @@ Active user session example:
     firmwareVersion = "v2.1"
     lastSync      = 2026-03-05T14:31:58
 
-[OBJECT DIAGRAM - INSERT HERE]
+Mermaid code:
+```mermaid
+flowchart TD
+    userObj["userObj : UserModel<br/>uid = abc123xyz<br/>name = Rahul Kumar<br/>email = rahul@gmail.com<br/>role = user<br/>budgetLimit = 1500.0"]
+    readingObj["readingObj : ReadingModel<br/>power = 1.42 kW<br/>voltage = 231.5 V<br/>current = 6.14 A<br/>timestamp = 2026-03-05T14:32:00"]
+    meterObj["meterObj : MeterModel<br/>meterId = METER001<br/>ownerUid = abc123xyz<br/>status = Online<br/>firmwareVersion = v2.1<br/>lastSync = 2026-03-05T14:31:58"]
+
+    userObj --> meterObj
+    meterObj --> readingObj
+```
 
 4.2.7 COMPONENT DIAGRAM
 
@@ -741,7 +1232,46 @@ Active user session example:
   Razorpay Payment Gateway
   Google Sign-In OAuth API
 
-[COMPONENT DIAGRAM - INSERT HERE]
+Mermaid code:
+```mermaid
+flowchart LR
+  subgraph MobileApp[Flutter Mobile App]
+    screens[Screens]
+    services[AuthService / DatabaseService / AlertService / AnomalyService]
+    provider[ThemeProvider]
+  end
+
+  subgraph Firebase[Firebase Backend]
+    auth[Firebase Authentication]
+    rtdb[Firebase RTDB]
+    firestore[Cloud Firestore]
+    notify[Push Notifications]
+  end
+
+  subgraph IoT[IoT Hardware Layer]
+    esp[ESP8266 + PZEM-004T]
+    broker[HiveMQ Cloud MQTT Broker]
+    bridge[mqtt_sync.py Bridge]
+  end
+
+  subgraph External[External Services]
+    razorpay[Razorpay]
+    google[Google Sign-In OAuth API]
+  end
+
+  screens --> services
+  services --> auth
+  services --> rtdb
+  services --> firestore
+  services --> notify
+  services --> razorpay
+  services --> google
+  esp --> broker
+  broker --> bridge
+  bridge --> rtdb
+  rtdb --> services
+  provider --> screens
+```
 
 4.2.8 DEPLOYMENT DIAGRAM
 
@@ -765,7 +1295,24 @@ Node 5: Google Firebase Cloud
 Node 6: Razorpay Cloud
   - Processes bill payment transactions
 
-[DEPLOYMENT DIAGRAM - INSERT HERE]
+Mermaid code:
+```mermaid
+flowchart TB
+    userPhone["Node 1: Android Device<br/>Runs WattX APK<br/>Connects over HTTPS"]
+    smartMeter["Node 2: ESP8266 Smart Meter<br/>Publishes readings over WiFi"]
+    broker["Node 3: HiveMQ Cloud MQTT Broker<br/>Topics: METER001/readings, METER001/controls"]
+    bridge["Node 4: Python Bridge Server<br/>mqtt_sync.py"]
+    firebase["Node 5: Google Firebase Cloud<br/>RTDB / Firestore / Auth / Notifications"]
+    payment["Node 6: Razorpay Cloud<br/>Payment processing"]
+
+    smartMeter --> broker
+    broker --> bridge
+    bridge --> firebase
+    firebase --> userPhone
+    userPhone --> firebase
+    userPhone --> payment
+    firebase --> broker
+```
 
 4.2.9 COLLABORATION DIAGRAM
 
@@ -780,7 +1327,29 @@ Real-Time Device Toggle Collaboration:
 8. mqtt_sync.py writes status back to Firebase RTDB
 9. ControlScreen active count badge updates: "1/5 ON"
 
-[COLLABORATION DIAGRAM - INSERT HERE]
+Mermaid code:
+```mermaid
+sequenceDiagram
+  actor User
+  participant ControlScreen
+  participant DatabaseService
+  participant RTDB as Firebase RTDB
+  participant Bridge as mqtt_sync.py
+  participant MQTT as HiveMQ Broker
+  participant ESP8266
+
+  User->>ControlScreen: Tap Light 1 ON
+  ControlScreen->>DatabaseService: toggleDevice("light1", true)
+  DatabaseService->>RTDB: Write /devices/METER001/controls/light1 = true
+  RTDB-->>Bridge: Notify value change
+  Bridge->>MQTT: Publish METER001/controls
+  MQTT->>ESP8266: Deliver command
+  ESP8266->>ESP8266: Switch relay ON
+  ESP8266->>MQTT: Publish hardware status
+  MQTT->>Bridge: Forward status update
+  Bridge->>RTDB: Write /status/METER001
+  RTDB-->>ControlScreen: Update active badge
+```
 
 4.3 USER INTERFACE DESIGN USING FIGMA
 
@@ -813,45 +1382,106 @@ Screen Designs:
 
 4.4.1 RDBMS (Relational Conceptual Model)
 
-Logical relationships (Firebase NoSQL but modeled relationally):
-  Users      (1) -----> (1)   Meters
-  Meters     (1) -----> (N)   Readings
-  Users      (1) -----> (N)   Alerts
-  Users      (1) -----> (N)   Bills
-  Users      (1) -----> (N)   Complaints
-  Users      (1) -----> (N)   Schedules
-  KSEB Offcr (1) -----> (N)   Consumers (Users)
-  Admins     (1) -----> (N)   All Users
+WattX follows a structured cloud database design to store and manage smart
+energy monitoring data in an organized manner. Firebase Realtime Database
+and Cloud Firestore are used as the backend databases for maintaining user
+profiles, smart meter details, live energy readings, device control states,
+alerts, bills, complaints, schedules, notices, and administrative data.
+
+The database follows a logical relational structure where the major modules
+of the system are connected through unique identifiers so that data remains
+consistent and duplication is minimized. Although Firebase is a NoSQL
+platform, the system is modeled conceptually like an RDBMS for design and
+documentation purposes.
+
+Each major module of WattX such as User Management, Meter Management,
+Reading Collection, Alerts, Billing, Complaint Handling, Scheduling, and
+Administration has separate collections or nodes that are linked together.
+
+For example, the users collection stores the login and profile details of
+all users such as Admin, KSEB Officer, and Consumer. The meters collection
+is linked to users through owner identifiers. The readings node is linked
+to a specific smart meter. The alerts, bills, complaints, and schedules are
+associated with users and meters through IDs. This structure helps WattX
+maintain data integrity, efficient access, and proper coordination between
+consumer, officer, and admin modules.
 
 4.4.2 NORMALIZATION
 
-1NF: All fields contain atomic (single) values. No repeating groups.
-     Each reading has exactly one value per field (power, voltage, etc.)
+Normalization is the process of organizing data to reduce redundancy and
+maintain consistency. In WattX, normalization principles are applied in the
+database design to ensure efficient storage and proper relationships between
+different modules.
 
-2NF: All non-key attributes depend fully on the primary key (document ID).
-     In the users collection, all fields (name, email, role) depend on uid.
+First Normal Form (1NF)
+In 1NF, all records contain atomic values and no repeating groups.
+Example: In the readings data, each record stores a single set of values
+such as power, voltage, current, frequency, power factor, and timestamp for
+one meter reading. Multiple readings are stored as separate records.
 
-3NF: No transitive dependencies. User role is stored directly in the
-     users document without indirect dependencies on other tables.
+Second Normal Form (2NF)
+In 2NF, the structure must already satisfy 1NF and all non-key attributes
+must depend fully on the primary key.
+Example: In the bills collection, fields such as month, year, totalKWh,
+amount, and dueDate depend entirely on the bill ID and are not partially
+dependent on other fields.
+
+Third Normal Form (3NF)
+In 3NF, the structure must already satisfy 2NF and there should be no
+transitive dependency, meaning non-key attributes should not depend on
+other non-key attributes.
+Example: User role and profile information are stored directly in the users
+collection, while meter-specific details such as firmwareVersion and status
+are stored separately in the meters collection to avoid redundancy.
+
+By applying normalization, WattX reduces unnecessary duplication of user,
+meter, billing, and alert data and improves maintainability of the overall
+system.
 
 4.4.3 SANITIZATION
 
-All user inputs are sanitized before storage:
-- Email: trimmed + validated with RegExp pattern
-- Password: minimum 6 characters enforced client-side
-- Name: trimmed, empty check before saving to Firestore
-- Payment amounts: validated as positive double values
-- Device toggle values: boolean-only written to Firebase RTDB
-- Firebase Security Rules enforce server-side access control
+In WattX, sanitization is implemented to ensure secure handling of user
+inputs and to protect personal, billing, and device-related data from
+security risks. Since the system allows users, KSEB officers, and admins to
+enter data such as login credentials, profile details, complaint messages,
+device schedules, and billing-related information, all inputs are validated
+and sanitized before being stored in Firebase.
+
+The following sanitization measures are applied in WattX:
+- Client-side input validation using Flutter form validators
+- Email validation and trimming before authentication and storage
+- Name, address, and complaint fields checked for empty or invalid input
+- Numeric validation for bill amounts, usage values, and threshold limits
+- Boolean-only validation for device control states written to RTDB
+- Firebase Authentication for secure password handling and session control
+- Firebase Security Rules to prevent unauthorized reads and writes
+
+By implementing sanitization, WattX ensures secure cloud data storage,
+protects user information, prevents invalid or malicious input, and helps
+maintain the reliability and integrity of the smart energy monitoring
+system.
 
 4.4.4 INDEXING
 
-Firebase RTDB indexes on JSON key paths automatically.
-Cloud Firestore composite indexes used:
-  - users: role (for admin user-type queries)
-  - complaints: userId + timestamp (for user complaint history)
-  - bills: userId + month + year (for monthly bill lookup)
-  - alerts: userId + isRead + timestamp (for notification list)
+Indexing in WattX is used to improve database performance and speed up data
+retrieval. Firebase Realtime Database and Cloud Firestore support indexed
+lookups that help the application quickly access frequently used records
+such as user profiles, meter details, bills, complaints, alerts, and
+analytics data.
+
+Primary identifiers such as uid, meterId, billId, and alertId are used for
+efficient access to important records. In Firestore, composite indexes are
+applied on commonly queried fields such as role, userId, month, year,
+timestamp, and isRead to improve search and filtering operations.
+
+Examples of indexing used in WattX:
+- users: role (for admin filtering of user types)
+- complaints: userId + timestamp (for complaint history)
+- bills: userId + month + year (for monthly bill lookup)
+- alerts: userId + isRead + timestamp (for notification display)
+
+Thus, indexing helps in faster queries, smoother dashboard loading,
+efficient filtering, and better overall performance of the WattX system.
 
 4.5 TABLE DESIGN
 
@@ -1007,6 +1637,15 @@ UserModel.fromMap() null safety:
   Expected: UserModel with nullable fields as null
   Result: PASS
 
+Additional negative and boundary unit tests:
+- AuthService.signIn() with invalid email format is rejected at the form
+  validation layer without calling Firebase, saving network usage.
+- DatabaseService.toggleDevice() with an unsupported device key throws a
+  controlled exception and logs the error so that invalid keys do not
+  silently corrupt the database.
+- AnomalyService.detectAnomaly() with avg7day=0 safely returns "normal" to
+  avoid division-by-zero errors and unexpected crashes.
+
 5.2.2 INTEGRATION TESTING
 
 Firebase Auth + Firestore Role Routing:
@@ -1049,6 +1688,17 @@ Test 3: Schedule Auto-Off
 Test 4: Razorpay Bill Payment
   Input   : Test card 4111 1111 1111 1111, CVV 123
   Expected: Payment succeeds in test mode, bill marked "Paid"
+  Result  : PASS
+
+Test 5: Role-Based Access Control
+  Input   : Login as KSEB Officer and attempt to open Admin dashboard
+  Expected: Access denied; user stays on KSEB Officer dashboard
+  Result  : PASS
+
+Test 6: Offline Handling
+  Input   : Turn off mobile data/WiFi while Dashboard is open
+  Expected: Last known readings remain visible, offline status indicator
+            shown, and no app crash occurs
   Result  : PASS
 
 5.2.4 USER ACCEPTANCE TESTING (UAT)
@@ -1186,6 +1836,25 @@ Step 5: IoT integration (mqtt_sync.py)
   - Connects to HiveMQ with TLS on port 8883
   - Subscribes to METER001/readings topic
   - Writes to Firebase /readings/METER001/latest
+
+Step 6: Control Center and Schedules
+  - Implemented ControlScreen with toggles bound to device keys
+    (light1, light2, light3, fan1, fan2).
+  - DatabaseService.toggleDevice() writes the new state to RTDB; the
+    mqtt_sync.py bridge listens for changes and publishes MQTT commands so
+    that relays on the ESP8266 board switch accordingly.
+  - SchedulesScreen allows users to create, list, and delete auto-OFF rules
+    stored under /schedules; a periodic server-side job checks due times and
+    updates device states to enforce schedules.
+
+Step 7: Analytics and Billing Logic
+  - Developed background logic to aggregate individual readings into hourly
+    and daily energy values that are plotted using fl_chart on the
+    AnalyticsScreen.
+  - Implemented a simple tariff engine that multiplies kWh by slab-wise
+    rates to compute an estimated bill, stored as BillModel objects.
+  - Integrated Razorpay so that, after successful payment, the respective
+    bill document is updated with isPaid=true and a transaction reference.
 
 6.2.1 USER TRAINING
 
