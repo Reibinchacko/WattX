@@ -14,7 +14,7 @@ import '../models/notice_model.dart';
 import '../models/complaint_model.dart';
 
 class DatabaseService {
-  final FirebaseDatabase _db = FirebaseDatabase.instance;
+  FirebaseDatabase get _db => FirebaseDatabase.instance;
 
   // --- User Profile Management ---
 

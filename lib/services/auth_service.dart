@@ -3,9 +3,9 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'database_service.dart';
 
 class AuthService {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
-  final DatabaseService _databaseService = DatabaseService();
+  FirebaseAuth get _auth => FirebaseAuth.instance;
+  GoogleSignIn get _googleSignIn => GoogleSignIn();
+  DatabaseService get _databaseService => DatabaseService();
 
   User? get currentUser => _auth.currentUser;
 
@@ -64,6 +64,11 @@ class AuthService {
     required String email,
     required String password,
   }) async {
+    final re = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+    if (!re.hasMatch(email)) {
+      throw const FormatException('Invalid email format');
+    }
+
     try {
       return await _auth.signInWithEmailAndPassword(
         email: email,
