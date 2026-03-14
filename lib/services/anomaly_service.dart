@@ -199,6 +199,17 @@ class AnomalyService {
     return AnomalySeverity.normal;
   }
 
+  /// Exposed for unit testing as per 5.2.1 requirement
+  static String detectAnomaly(double currentPower, double baselineAvg) {
+    if (baselineAvg <= 0) return 'normal';
+    final pct = ((currentPower - baselineAvg) / baselineAvg) * 100;
+
+    if (pct >= _criticalThreshold) return 'critical';
+    if (pct >= _highThreshold) return 'high';
+    if (pct <= _lowThreshold) return 'efficient';
+    return 'normal';
+  }
+
   String _todayKey() {
     final now = DateTime.now();
     return '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';

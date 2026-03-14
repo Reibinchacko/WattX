@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'theme/app_theme.dart';
 import 'schedules_screen.dart';
+import 'services/database_service.dart';
 
 class ControlScreen extends StatefulWidget {
   const ControlScreen({super.key});
@@ -108,7 +109,14 @@ class _ControlScreenState extends State<ControlScreen> {
         _onSince.remove(key);
       }
     });
-    await _controlRef.child(key).update({'isOn': value});
+    try {
+      await DatabaseService().toggleDevice('METER001', key, value);
+    } catch (e) {
+      // Revert if API call fails
+      setState(() {
+        _states[key] = !value;
+      });
+    }
   }
 
   Future<void> _setFanSpeed(String key, int speed) async {
@@ -132,7 +140,9 @@ class _ControlScreenState extends State<ControlScreen> {
       }
     });
     for (final key in _states.keys) {
-      await _controlRef.child(key).update({'isOn': value});
+      try {
+        await DatabaseService().toggleDevice('METER001', key, value);
+      } catch (_) {}
     }
   }
 

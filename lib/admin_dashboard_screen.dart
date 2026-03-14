@@ -6,6 +6,8 @@ import 'assign_officer_screen.dart';
 import 'energy_report_screen.dart';
 import 'profile_screen.dart';
 import 'notifications_screen.dart';
+import 'services/database_service.dart';
+import 'models/user_model.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -278,47 +280,67 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   }
 
   Widget _buildStatsGrid() {
-    return GridView.count(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      crossAxisCount: 2,
-      crossAxisSpacing: 16,
-      mainAxisSpacing: 16,
-      childAspectRatio: 1.15,
-      children: [
-        _buildStatCard(
-          '2,543',
-          'Registered Users',
-          Icons.people_outline,
-          null,
-          silhouetteIcon: Icons.people_outline,
-        ),
-        _buildStatCard(
-          '1,890',
-          'Active Meters',
-          Icons.bolt_outlined,
-          '+12%',
-          silhouetteIcon: Icons.bolt_outlined,
-        ),
-        _buildStatCard(
-          '14',
-          'Active Alerts',
-          Icons.warning_amber_rounded,
-          null,
-          iconColor: const Color(0xFFFF8A00),
-          iconBgColor: const Color(0xFFFFF4E9),
-          silhouetteIcon: Icons.priority_high_rounded,
-        ),
-        _buildStatCard(
-          '54ms',
-          'Avg Latency',
-          Icons.dns_outlined,
-          null,
-          iconColor: const Color(0xFF4C84FF),
-          iconBgColor: const Color(0xFFEFF4FF),
-          silhouetteIcon: Icons.storage_rounded,
-        ),
-      ],
+    final db = DatabaseService();
+    return StreamBuilder<List<UserModel>>(
+      stream: db.getUsersByRole('user'),
+      builder: (context, userSnap) {
+        return StreamBuilder<int>(
+          stream: db.getTotalMetersCount(),
+          builder: (context, meterSnap) {
+            return StreamBuilder<int>(
+              stream: db.getTotalAlertsCountAdmin(),
+              builder: (context, alertSnap) {
+                final usersCount = userSnap.data?.length ?? 0;
+                final metersCount = meterSnap.data ?? 0;
+                final alertsCount = alertSnap.data ?? 0;
+
+                return GridView.count(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 16,
+                  childAspectRatio: 1.15,
+                  children: [
+                    _buildStatCard(
+                      usersCount.toString(),
+                      'Registered Users',
+                      Icons.people_outline,
+                      null,
+                      silhouetteIcon: Icons.people_outline,
+                    ),
+                    _buildStatCard(
+                      metersCount.toString(),
+                      'Active Meters',
+                      Icons.bolt_outlined,
+                      null, // Removing hardcoded +12%
+                      silhouetteIcon: Icons.bolt_outlined,
+                    ),
+                    _buildStatCard(
+                      alertsCount.toString(),
+                      'Active Alerts',
+                      Icons.warning_amber_rounded,
+                      null,
+                      iconColor: const Color(0xFFFF8A00),
+                      iconBgColor: const Color(0xFFFFF4E9),
+                      silhouetteIcon: Icons.priority_high_rounded,
+                    ),
+                    _buildStatCard(
+                      '54ms',
+                      'Avg Latency',
+                      Icons.dns_outlined,
+                      null,
+                      iconColor: const Color(0xFF4C84FF),
+                      iconBgColor: const Color(0xFFEFF4FF),
+                      silhouetteIcon: Icons.storage_rounded,
+                    ),
+                  ],
+                );
+              },
+            );
+          },
+        );
+      },
     );
   }
 

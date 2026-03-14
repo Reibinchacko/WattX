@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'theme/app_theme.dart';
+import 'services/database_service.dart';
+import 'models/user_model.dart';
 
 class AssignOfficerContent extends StatefulWidget {
   const AssignOfficerContent({super.key});
@@ -140,111 +142,124 @@ class _AssignOfficerContentState extends State<AssignOfficerContent> {
   }
 
   Widget _buildOfficersList() {
-    final officers = [
-      {
-        'initials': 'AK',
-        'email': 'anil.kumar@kseb.in',
-        'subtitle': 'Assigned to Meter #449201',
-        'bgColor': const Color(0xFFEFF4FF),
-        'textColor': const Color(0xFF4C84FF),
-      },
-      {
-        'initials': 'PS',
-        'email': 'priya.s@kseb.in',
-        'subtitle': 'Assigned to Meter #883109',
-        'bgColor': const Color(0xFFF6EFFF),
-        'textColor': const Color(0xFFA14CFF),
-      },
-      {
-        'initials': 'RM',
-        'email': 'rajesh.m@kseb.in',
-        'subtitle': 'Assigned to Meter #112004',
-        'bgColor': const Color(0xFFFFF4E9),
-        'textColor': const Color(0xFFFF8A00),
-      },
-      {
-        'initials': 'VJ',
-        'email': 'vijay.n@kseb.in',
-        'subtitle': 'Assigned to 2 Meters',
-        'bgColor': const Color(0xFFE0F7F6),
-        'textColor': const Color(0xFF26A69A),
-      },
-    ];
+    return StreamBuilder<List<UserModel>>(
+      stream: DatabaseService().getUsersByRole('officer'),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snapshot.hasError) {
+          return const Center(child: Text('Error loading officers'));
+        }
+        final officersList = snapshot.data ?? [];
+        if (officersList.isEmpty) {
+          return Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Center(
+              child: Text(
+                'No officers found.',
+                style: GoogleFonts.inter(color: Colors.black38),
+              ),
+            ),
+          );
+        }
 
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-      itemCount: officers.length,
-      itemBuilder: (context, index) {
-        final officer = officers[index];
-        return Container(
-          margin: const EdgeInsets.only(bottom: 12),
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.02),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: officer['bgColor'] as Color,
-                  shape: BoxShape.circle,
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  officer['initials'] as String,
-                  style: GoogleFonts.inter(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
-                    color: officer['textColor'] as Color,
+        final bgColors = [
+          const Color(0xFFEFF4FF),
+          const Color(0xFFF6EFFF),
+          const Color(0xFFFFF4E9),
+          const Color(0xFFE0F7F6),
+        ];
+        final textColors = [
+          const Color(0xFF4C84FF),
+          const Color(0xFFA14CFF),
+          const Color(0xFFFF8A00),
+          const Color(0xFF26A69A),
+        ];
+
+        return ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+          itemCount: officersList.length,
+          itemBuilder: (context, index) {
+            final officer = officersList[index];
+            final name = officer.name.isNotEmpty ? officer.name : 'O';
+            final initials = name.length > 1 ? name.substring(0, 2).toUpperCase() : name.toUpperCase();
+            final email = officer.email;
+            
+            final bgColor = bgColors[index % bgColors.length];
+            final textColor = textColors[index % textColors.length];
+
+            return Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.02),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
                   ),
-                ),
+                ],
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      officer['email'] as String,
+              child: Row(
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: bgColor,
+                      shape: BoxShape.circle,
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      initials,
                       style: GoogleFonts.inter(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: AppTheme.midnightCharcoal,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        color: textColor,
                       ),
                     ),
-                    Row(
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(Icons.grid_view_rounded,
-                            size: 12, color: Colors.black26),
-                        const SizedBox(width: 4),
                         Text(
-                          officer['subtitle'] as String,
+                          email,
                           style: GoogleFonts.inter(
-                            fontSize: 12,
-                            color: Colors.black26,
-                            fontWeight: FontWeight.w500,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            color: AppTheme.midnightCharcoal,
                           ),
+                        ),
+                        Row(
+                          children: [
+                            const Icon(Icons.grid_view_rounded,
+                                size: 12, color: Colors.black26),
+                            const SizedBox(width: 4),
+                            Text(
+                              'KSEB Officer',
+                              style: GoogleFonts.inter(
+                                fontSize: 12,
+                                color: Colors.black26,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
-                  ],
-                ),
+                  ),
+                  const Icon(Icons.chevron_right_rounded, color: Colors.black12),
+                ],
               ),
-              const Icon(Icons.chevron_right_rounded, color: Colors.black12),
-            ],
-          ),
+            );
+          },
         );
       },
     );

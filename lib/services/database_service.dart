@@ -44,6 +44,17 @@ class DatabaseService {
     });
   }
 
+  // --- Device Control ---
+
+  Future<void> toggleDevice(String meterId, String key, bool value) async {
+    const validKeys = ['LED 1', 'LED 2', 'LED 3', 'Motor 1', 'Motor 2'];
+    if (!validKeys.contains(key)) {
+      debugPrint('Error: Invalid device key "$key"');
+      throw const FormatException('Unsupported device key');
+    }
+    await _db.ref('Devices/$meterId/controls').child(key).update({'isOn': value});
+  }
+
   // --- Energy Readings ---
 
   Stream<ReadingModel?> getLiveReading(String meterId) {
@@ -192,6 +203,33 @@ class DatabaseService {
             .toList();
       }
       return [];
+    });
+  }
+
+  // --- Admin Dashboard Stats ---
+
+  Stream<int> getTotalMetersCount() {
+    return _db.ref('Devices').onValue.map((event) {
+      final data = event.snapshot.value as Map<dynamic, dynamic>?;
+      return data?.length ?? 0;
+    });
+  }
+
+  Stream<int> getTotalAlertsCountAdmin() {
+    return _db.ref('Alerts').onValue.map((event) {
+      final data = event.snapshot.value as Map<dynamic, dynamic>?;
+      if (data == null) return 0;
+      int count = 0;
+      for (var userAlerts in data.values) {
+        if (userAlerts is Map) {
+          for (var alert in userAlerts.values) {
+             if (alert is Map && alert['isRead'] == false) {
+                 count++;
+             }
+          }
+        }
+      }
+      return count;
     });
   }
 

@@ -6,6 +6,9 @@ import 'energy_report_screen.dart';
 import 'profile_screen.dart';
 import 'kseb_consumer_list_screen.dart';
 import 'kseb_alerts_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'services/database_service.dart';
+import 'models/user_model.dart';
 
 class KsebOfficerDashboardScreen extends StatefulWidget {
   const KsebOfficerDashboardScreen({super.key});
@@ -145,46 +148,66 @@ class _KsebOfficerDashboardScreenState
   }
 
   Widget _buildStatsGrid() {
-    return GridView.count(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      crossAxisCount: 2,
-      crossAxisSpacing: 16,
-      mainAxisSpacing: 16,
-      childAspectRatio: 1.3,
-      children: [
-        GestureDetector(
-          onTap: () => setState(() => _selectedIndex = 1),
-          child: _buildStatCard(
-            '120,500',
-            'Total Consumers',
-            Icons.people_alt_rounded,
-            const Color(0xFFFFB300),
-          ),
-        ),
-        _buildStatCard(
-          '118,200',
-          'Active Meters',
-          Icons.speed_rounded,
-          const Color(0xFFFFB300),
-        ),
-        GestureDetector(
-          onTap: () => setState(() => _selectedIndex = 3),
-          child: _buildStatCard(
-            '45',
-            'Active Alerts',
-            Icons.notifications_rounded,
-            const Color(0xFFFFE0B2),
-            iconColor: const Color(0xFFFF8A00),
-          ),
-        ),
-        _buildStatCard(
-          '1,200',
-          'High Usage',
-          Icons.trending_up_rounded,
-          const Color(0xFFFFB300),
-        ),
-      ],
+    final officerUid = FirebaseAuth.instance.currentUser?.uid;
+    if (officerUid == null) {
+      return const SizedBox();
+    }
+
+    final db = DatabaseService();
+
+    return StreamBuilder<List<UserModel>>(
+      stream: db.getAssignedConsumers(officerUid),
+      builder: (context, consumerSnap) {
+        return StreamBuilder<int>(
+          stream: db.getTotalAlertsCountAdmin(), 
+          builder: (context, alertSnap) {
+            final consumerCount = consumerSnap.data?.length ?? 0;
+            final alertsCount = alertSnap.data ?? 0;
+
+            return GridView.count(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              crossAxisCount: 2,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+              childAspectRatio: 1.3,
+              children: [
+                GestureDetector(
+                  onTap: () => setState(() => _selectedIndex = 1),
+                  child: _buildStatCard(
+                    consumerCount.toString(),
+                    'Total Consumers',
+                    Icons.people_alt_rounded,
+                    const Color(0xFFFFB300),
+                  ),
+                ),
+                _buildStatCard(
+                  consumerCount.toString(),
+                  'Active Meters',
+                  Icons.speed_rounded,
+                  const Color(0xFFFFB300),
+                ),
+                GestureDetector(
+                  onTap: () => setState(() => _selectedIndex = 3),
+                  child: _buildStatCard(
+                    alertsCount.toString(),
+                    'Active Alerts',
+                    Icons.notifications_rounded,
+                    const Color(0xFFFFE0B2),
+                    iconColor: const Color(0xFFFF8A00),
+                  ),
+                ),
+                _buildStatCard(
+                  '0',
+                  'High Usage',
+                  Icons.trending_up_rounded,
+                  const Color(0xFFFFB300),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 

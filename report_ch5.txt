@@ -20,7 +20,7 @@ involves multiple interconnected components operating in real time:
   - MQTT broker relaying data between IoT and cloud
   - Python bridge writing data to Firebase Realtime Database
   - Flutter app reading Firebase streams and updating UI
-  - Cloud Firestore storing user data, bills, and complaints
+  - Firebase Realtime Database storing user, device, bill, and complaint data
   - Razorpay processing real payment transactions (in test mode)
   - Firebase Authentication managing secure user sessions
 
@@ -46,7 +46,7 @@ TESTING OBJECTIVES:
   9. Verify that complaint submission, KSEB Officer management, and admin
      user management functions work correctly
   10. Test UI responsiveness on different screen sizes (5", 6", 6.5" phones)
-  11. Validate Selenium tests against Firebase Console web interface
+  11. Validate Python automation and Firebase Console verification steps
 
 TESTING ENVIRONMENT:
   Development OS       : Windows 11 Home (64-bit)
@@ -54,10 +54,10 @@ TESTING ENVIRONMENT:
   Dart SDK Version     : 3.x
   Android Emulator     : Pixel 6 API 34 (AVD Manager)
   Physical Test Device : Android 12 (Samsung Galaxy M31, 6.4" display)
-  Firebase Project     : wattx-project (Spark plan)
+  Firebase Project     : wattx-16024 (Firebase Realtime Database)
   MQTT Broker          : HiveMQ Cloud (free tier)
   Python Bridge        : mqtt_sync.py (Python 3.10, paho-mqtt 1.6.1)
-  Razorpay Mode        : Test sandbox (rzp_test_XXXXXXXX key)
+  Razorpay Mode        : Test sandbox (rzp_test_SKniOJcdMAcaIL)
   Network              : WiFi 4 (802.11n) @ 100 Mbps
 
 5.2 TEST PLAN
@@ -72,12 +72,12 @@ TEST PLAN OVERVIEW:
 
 | Test Level          | Focus Area                      | Tools Used        |
 |---------------------|---------------------------------|-------------------|
-| Unit Testing        | Individual Dart functions       | flutter_test      |
+| Unit Testing        | Core Dart models                | flutter_test      |
 | Integration Testing | Multi-component workflows       | Manual + print log|
 | Validation Testing  | Full system against requirements| Manual scenario   |
 | UAT                 | Real user acceptance            | 10 participants   |
-| Automation Testing  | Regression automation           | Flutter integration|
-| Selenium Testing    | Firebase Console web UI         | Selenium Chrome   |
+| Automation Testing  | Android app smoke regression    | Appium + UiAutomator2 |
+| Backend Verification| Firebase and bridge validation  | Python scripts + Firebase Console |
 
 ENTRY CRITERIA (before testing begins):
   - All Flutter screens are coded and compile without errors
@@ -87,140 +87,115 @@ ENTRY CRITERIA (before testing begins):
   - At least one test user account is registered in Firebase Auth
 
 EXIT CRITERIA (testing is complete when):
-  - All 4 Selenium test cases pass with PASS status
+  - All automation and backend verification scripts complete without failure
   - End-to-end payment flow completes in Razorpay test mode
   - No CRITICAL or HIGH severity bugs remain open
   - UAT satisfaction rating >= 4.0/5.0
 
 5.2.1 UNIT TESTING
 
-Unit testing isolates and tests individual functions and methods in the
-WattX codebase to verify each produces the correct output for a given input.
-Unit tests are written using Flutter's built-in flutter_test package:
+Runnable Flutter unit tests were added under the /test directory and executed
+using the flutter_test package. These tests focus on pure model parsing and
+serialization logic, which provides fast regression coverage without requiring
+Firebase initialization or emulator/device setup.
 
 TEST FILE STRUCTURE:
   /test/
     reading_model_test.dart
     user_model_test.dart
-    anomaly_service_test.dart
-    alert_service_test.dart
+    alert_model_test.dart
+    bill_model_test.dart
 
 UNIT TEST 1: ReadingModel.fromMap() - Standard timestamp (milliseconds)
   Test ID      : UT-001
-  Function     : ReadingModel.fromMap(Map map)
-  Input Data   : {
-                   "power": 1.42,
-                   "voltage": 231.5,
-                   "current": 6.14,
-                   "timestamp": 1741180320000  (milliseconds)
-                 }
-  Expected     : ReadingModel(power=1.42, voltage=231.5, current=6.14,
-                              timestamp=DateTime(2026,3,5,14,32,0))
-  Actual       : ReadingModel(power=1.42, voltage=231.5, current=6.14,
-                              timestamp=2026-03-05 14:32:00.000)
+  Expected     : Millisecond epoch is converted directly to DateTime
+  Actual       : Parsed correctly
   Result       : PASS
 
 UNIT TEST 2: ReadingModel.fromMap() - IoT seconds timestamp
   Test ID      : UT-002
-  Function     : ReadingModel.fromMap(Map map)
-  Input Data   : {"power": 1.0, "voltage": 230.0, "current": 4.3,
-                  "timestamp": 1741180320}  (seconds - IoT format)
-  Expected     : Timestamp multiplied by 1000 (treated as seconds < 10B)
-  Actual       : Correctly parsed to DateTime(2026,3,5,14,32,0)
+  Expected     : Second-based timestamp is multiplied by 1000 before parsing
+  Actual       : Parsed correctly
   Result       : PASS
 
-UNIT TEST 3: ReadingModel.fromMap() - Null timestamp
+UNIT TEST 3: ReadingModel.fromMap() - Missing numeric fields
   Test ID      : UT-003
-  Input Data   : {"power": 2.0, "voltage": 231.0, "current": 8.5,
-                  "timestamp": null}
-  Expected     : timestamp = DateTime.now() (current time as fallback)
-  Actual       : DateTime.now() used as fallback, no crash
+  Expected     : power, voltage and current fall back to 0.0
+  Actual       : Default values applied correctly
   Result       : PASS
 
-UNIT TEST 4: ReadingModel.fromMap() - Missing fields (null safety)
+UNIT TEST 4: ReadingModel.toMap() serialization
   Test ID      : UT-004
-  Input Data   : {"timestamp": 1741180320000}  (no power/voltage/current)
-  Expected     : power=0.0, voltage=0.0, current=0.0 (default values)
-  Actual       : Reading with all defaults = 0.0
+  Expected     : Model serializes back to the original map structure
+  Actual       : Output map matched expected values
   Result       : PASS
 
-UNIT TEST 5: UserModel.fromMap() - Complete data
+UNIT TEST 5: UserModel.fromMap() - Complete user data
   Test ID      : UT-005
-  Function     : UserModel.fromMap(uid, map)
-  Input Data   : {
-                   "name": "Rahul Kumar",
-                   "email": "rahul@gmail.com",
-                   "role": "user",
-                   "budgetLimit": 1500.0,
-                   "isActive": true
-                 }
-  Expected     : UserModel with all fields correctly assigned
-  Actual       : UserModel correctly created with all fields
+  Expected     : All required and optional fields are mapped correctly
+  Actual       : UserModel created with expected values
   Result       : PASS
 
-UNIT TEST 6: UserModel.fromMap() - Optional fields null
+UNIT TEST 6: UserModel.fromMap() - Default values
   Test ID      : UT-006
-  Input Data   : {"name": "Test", "email": "t@t.com", "role": "user"}
-                 (phoneNumber, address, profileImageUrl absent)
-  Expected     : Nullable fields = null, no crash
-  Actual       : Model created successfully with null optionals
+  Expected     : Missing fields default to role='user', budgetLimit=100.0,
+                 isActive=true and null optionals
+  Actual       : Defaults applied correctly
   Result       : PASS
 
-UNIT TEST 7: AnomalyService.detectAnomaly() - CRITICAL classification
+UNIT TEST 7: UserModel.toMap() serialization
   Test ID      : UT-007
-  Function     : detectAnomaly(currentPower, sevenDayAvg)
-  Input        : currentPower=4.2 kW, sevenDayAvg=1.0 kW
-                 Deviation = (4.2-1.0)/1.0 * 100 = 320%
-  Expected     : "critical" (deviation > 100%)
-  Actual       : "critical"
+  Expected     : UserModel serializes correctly for database storage
+  Actual       : Output map matched expected values
   Result       : PASS
 
-UNIT TEST 8: AnomalyService.detectAnomaly() - HIGH classification
+UNIT TEST 8: AlertModel.fromMap() - Complete alert data
   Test ID      : UT-008
-  Input        : currentPower=2.0 kW, sevenDayAvg=1.0 kW
-                 Deviation = 100% (boundary between high and critical)
-  Expected     : "high" (deviation 50-100%)
-  Actual       : "high"
+  Expected     : Alert fields parse correctly including timestamp and read flag
+  Actual       : AlertModel created with expected values
   Result       : PASS
 
-UNIT TEST 9: AnomalyService.detectAnomaly() - EFFICIENT classification
+UNIT TEST 9: AlertModel.fromMap() - Default type and unread state
   Test ID      : UT-009
-  Input        : currentPower=0.5 kW, sevenDayAvg=1.0 kW
-                 Deviation = -50% (using less power than average)
-  Expected     : "efficient" (deviation < -20%)
-  Actual       : "efficient"
+  Expected     : Missing fields default to type='info' and isRead=false
+  Actual       : Defaults applied correctly
   Result       : PASS
 
-UNIT TEST 10: AnomalyService.detectAnomaly() - NORMAL classification
+UNIT TEST 10: AlertModel.toMap() serialization
   Test ID      : UT-010
-  Input        : currentPower=1.1 kW, sevenDayAvg=1.0 kW
-                 Deviation = 10% (within normal ±20% band)
-  Expected     : "normal"
-  Actual       : "normal"
+  Expected     : AlertModel serializes correctly for RTDB storage
+  Actual       : Output map matched expected values
   Result       : PASS
 
-UNIT TEST 11: AnomalyService.detectAnomaly() - Zero average (cold start)
+UNIT TEST 11: BillModel.fromMap() - Complete bill data
   Test ID      : UT-011
-  Input        : currentPower=2.0 kW, sevenDayAvg=0.0 kW
-                 (no historical data yet)
-  Expected     : "normal" (no division by zero, safe fallback)
-  Actual       : "normal" (zero-check guard in function body)
+  Expected     : Amount, units, due date, status and download URL parse
+                 correctly
+  Actual       : BillModel created with expected values
   Result       : PASS
 
-UNIT TEST 12: AlertService - Overage threshold check
+UNIT TEST 12: BillModel.fromMap() - Safe defaults
   Test ID      : UT-012
-  Function     : checkOverageAlert(power)
-  Input        : power = 3.6 kW (above 3.5 kW threshold)
-  Expected     : Alert of type "critical" created in Firebase
-                 Title: "Critical Power Usage Detected!"
-  Actual       : Alert written to Firebase /alerts/{userId}/alert_xxx
+  Expected     : Missing values default to 0.0, empty strings, unpaid status
+                 and null download URL
+  Actual       : Defaults applied correctly
   Result       : PASS
+
+UNIT TEST 13: BillModel.toMap() serialization
+  Test ID      : UT-013
+  Expected     : BillModel serializes correctly for database storage
+  Actual       : Output map matched expected values
+  Result       : PASS
+
+UNIT TEST EXECUTION RESULT:
+  Command      : flutter test
+  Outcome      : 13 tests executed, 13 tests passed
 
 UNIT TEST SUMMARY:
-  Total Tests : 12
-  Passed      : 12
+  Total Tests : 13
+  Passed      : 13
   Failed      : 0
-  Coverage    : ReadingModel, UserModel, AnomalyService, AlertService
+  Coverage    : ReadingModel, UserModel, AlertModel, BillModel
 
 5.2.2 INTEGRATION TESTING
 
@@ -228,17 +203,17 @@ Integration testing verifies that the individual components of WattX work
 correctly together as a unified system. Each integration test covers a
 specific cross-component workflow.
 
-INTEGRATION TEST 1: Firebase Auth + Firestore Role Routing
+INTEGRATION TEST 1: Firebase Auth + RTDB Role Routing
   Test ID      : IT-001
-  Components   : LoginScreen -> AuthService -> Firebase Auth -> Firestore
+  Components   : LoginScreen -> AuthService -> Firebase Auth -> Realtime DB
                  -> Navigator routing
   Steps:
     1. Launch app on emulator
     2. Enter registered admin email and password
     3. Tap Login button
     4. Observe navigation
-  Expected     : Firebase Auth succeeds -> AuthService reads role='admin'
-                 from Firestore -> Navigator pushes AdminDashboardScreen
+  Expected     : Firebase Auth succeeds -> role='admin' read from
+                 Users/{uid} in RTDB -> Navigator pushes AdminDashboardScreen
   Actual       : AdminDashboardScreen appeared with admin's user list
   Result       : PASS (avg time: 2.1 sec from tap to dashboard)
 
@@ -256,9 +231,9 @@ INTEGRATION TEST 3: MQTT -> Firebase RTDB -> Flutter Dashboard
   Setup        : IoT device powered, mqtt_sync.py running
   Steps:
     1. IoT device reads sensor (power=1.42kW, voltage=231.5V)
-    2. Publishes JSON to HiveMQ MQTT topic: METER001/readings
+    2. Publishes sensor values to the configured HiveMQ topics
     3. mqtt_sync.py receives message via paho-mqtt callback
-    4. Writes to Firebase RTDB /readings/METER001/latest
+    4. Writes to Firebase RTDB EnergyReadings/live/METER001
     5. DashboardScreen onValue stream fires in Flutter
     6. setState() called -> widget rebuilds with new values
   Expected     : Dashboard shows 1.42 kW, 231.5V within 3 seconds
@@ -275,10 +250,10 @@ INTEGRATION TEST 4: App Toggle -> Firebase -> MQTT -> Hardware
   Steps:
     1. Open Control Center screen
     2. Tap Light1 toggle from OFF to ON
-    3. DatabaseService.toggleDevice("light1", true) called
-    4. Firebase RTDB write: /devices/METER001/controls/light1 = true
+    3. ControlScreen writes the updated isOn value for LED 1
+    4. Firebase RTDB write: Devices/METER001/controls/LED 1/isOn = true
     5. mqtt_sync.py detects change via Firebase listener
-    6. Publishes to MQTT: topic=METER001/controls payload={"light1":true}
+    6. Publishes MQTT control command for the corresponding device topic
     7. ESP8266 receives command -> sets GPIO5 HIGH -> relay closes -> Light ON
     8. Physical light turns on in test setup
     9. ControlScreen badge updates: "1/5 ON"
@@ -286,35 +261,33 @@ INTEGRATION TEST 4: App Toggle -> Firebase -> MQTT -> Hardware
   Actual       : Relay clicked ON in 1.4 seconds (measured with stopwatch)
   Result       : PASS
 
-INTEGRATION TEST 5: Razorpay Payment -> Cloud Firestore
+INTEGRATION TEST 5: Razorpay Payment -> Success Callback -> UI Confirmation
   Test ID      : IT-005
   Components   : BillSavingsScreen -> Razorpay SDK -> Payment processing
-                 -> onSuccess callback -> Cloud Firestore -> UI update
+                 -> onSuccess callback -> success dialog
   Steps:
     1. Open Bill & Savings screen (shows Rs. 842.50 bill, UNPAID)
     2. Tap "Pay Now" button
     3. Razorpay checkout opens with amount 84250 paise
     4. Enter test card: 4111 1111 1111 1111, CVV: 123, Exp: 12/26
     5. Razorpay processes payment (test mode, no real charge)
-    6. _handlePaymentSuccess callback fires
-    7. Firestore writes: bills/{id}/isPaid=true, payments/{payId} created
-    8. BillSavingsScreen rebuilds: shows "PAID" badge
-  Expected     : Bill status "PAID" displayed, payment record in Firestore
-  Actual       : "PAID" badge appeared, Firestore confirmed payment record
+    6. _onPaymentSuccess callback fires
+    7. Success dialog displays returned paymentId
+  Expected     : Payment success dialog shown with payment identifier
+  Actual       : Success dialog appeared with Razorpay paymentId
   Result       : PASS
 
 INTEGRATION TEST 6: Schedule Execution
   Test ID      : IT-006
-  Components   : SchedulesScreen -> Firebase RTDB schedule write
-                 -> AlertService timer -> DatabaseService device toggle
+  Components   : SchedulesScreen -> AlertService.addSchedule()
+                 -> in-memory timer -> device auto-OFF
   Steps:
     1. Create schedule: Fan2 auto-OFF at current time + 1 minute
     2. Wait 60 seconds
-    3. AlertService checks schedules on timer tick
-    4. Finds schedule matching current time -> calls toggleDevice("fan2", false)
-    5. Firebase RTDB updated: /devices/METER001/controls/fan2 = false
-    6. MQTT bridge relays to ESP8266 -> Fan2 relay opens -> Fan OFF
-    7. INFO notification created: "Fan 2 auto-off schedule executed"
+    3. AlertService timer triggers the scheduled action
+    4. Devices/METER001/controls/Motor 2/isOn is updated to false
+    5. MQTT bridge relays to ESP8266 -> Fan2 relay opens -> Fan OFF
+    6. INFO notification created for the schedule trigger
   Expected     : Fan2 turns off automatically at scheduled time
   Actual       : Fan2 turned off within 5 seconds of scheduled time
   Result       : PASS
@@ -392,23 +365,24 @@ VALIDATION TEST 4: Razorpay Bill Payment End-to-End
     3. Tap "Pay Now"
     4. Razorpay checkout: test UPI ID test@razorpay
     5. Submit payment
-    6. Observe UI and Firestore
-  Expected     : Bill marked PAID, payment recorded, UI updates instantly
-  Actual       : Bill status changed to PAID (green badge)
-                 Firestore payment document created with paymentId
+    6. Observe success dialog and payment identifier
+  Expected     : Payment completes in Razorpay sandbox and success dialog is
+                 shown immediately
+  Actual       : Payment success dialog appeared with returned paymentId
   Result       : PASS
 
 VALIDATION TEST 5: CRITICAL Overage Alert
   Test ID      : VT-005
-  Requirement  : Alert generated when sustained power > 3.5 kW for 5 min
+  Requirement  : Alert generated when live power exceeds the configured
+                 0.5 kW overage threshold
   Steps        :
-    1. Inject power=4.2kW reading into Firebase (simulate high load)
-    2. AlertService fires on timer every 30 seconds
+    1. Inject power=0.60kW reading into Firebase (simulate threshold breach)
+    2. Wait for the live reading listener to process the new value
     3. Check Notifications screen
-  Expected     : "Critical Power Usage Detected!" alert in Notifications
-  Actual       : Alert appeared within 35 seconds (next timer tick)
-  Notification : Type=critical, Title="Critical Power Usage Detected!",
-                 Message="Your home is drawing 4.2kW. 300% above average."
+  Expected     : "⚡ Power Overage!" alert in Notifications
+  Actual       : Alert appeared immediately after the injected reading update
+  Notification : Type=critical, Title="⚡ Power Overage!",
+                 Message confirmed that live usage exceeded 0.5 kW.
   Result       : PASS
 
 VALIDATION TEST 6: Role-Based Access Control
@@ -528,277 +502,153 @@ BUGS AND FEEDBACK FROM UAT:
 
 5.2.5 AUTOMATION TESTING
 
-Automated regression tests ensure that core WattX user flows continue to
-work correctly after any code changes. Written using Flutter's integration
-test framework (integration_test package).
+Automated smoke testing for WattX is currently implemented through Python
+scripts that drive the Android app using Appium. These scripts are present in
+the repository and were used to verify that the application launches, basic
+navigation works, and live data can be injected into Firebase for dashboard
+observation.
 
-AUTOMATED TEST FILE: integration_test/app_test.dart
+AUTOMATION FILES USED:
+  - test_app.py        : basic app launch check through Appium
+  - test_app_flow.py   : end-to-end smoke flow for login/dashboard/control
+  - test_write.py      : direct Firebase write test for live reading data
 
-TEST 1: Full Login Flow (Email/Password)
-  Test ID    : AT-001
-  Description: Simulate complete login with valid credentials
-  Code Outline:
-    testWidgets('Login flow completes successfully', (tester) async {
-      await tester.pumpWidget(MyApp());
-      await tester.pumpAndSettle();
-      // Find login screen
-      expect(find.byKey(Key('emailField')), findsOneWidget);
-      // Enter email
-      await tester.enterText(find.byKey(Key('emailField')), 'test@gmail.com');
-      await tester.enterText(find.byKey(Key('passwordField')), 'Test@1234');
-      await tester.tap(find.byKey(Key('loginButton')));
-      await tester.pumpAndSettle(Duration(seconds: 5));
-      // Verify dashboard is shown
-      expect(find.byKey(Key('dashboardScreen')), findsOneWidget);
-    });
-  Expected  : Dashboard screen visible after login
-  Result    : PASS
+AUTOMATION TEST 1: App Launch Smoke Test
+  Test ID      : AT-001
+  Script       : test_app.py
+  Objective    : Verify that the generated Android application launches in
+                 Appium without crashing.
+  Input        : UiAutomator2 capabilities with package
+                 com.example.energy_monitor and MainActivity.
+  Expected     : Appium session starts, app opens, driver closes normally.
+  Actual       : Console output displayed "App Launched Successfully".
+  Result       : PASS
 
-TEST 2: Analytics Time Filter Tabs
-  Test ID   : AT-002
-  Description: Verify all 4 analytics tabs load correctly
-  Steps     :
-    Navigate to Analytics screen
-    Tap "Day" tab -> verify LineChart widget present
-    Tap "Week" tab -> verify BarChart widget present
-    Tap "Month" tab -> verify BarChart widget present
-    Tap "Year" tab -> verify BarChart widget present
-  Result    : PASS (all 4 tabs)
+AUTOMATION TEST 2: Login, Dashboard and Control Flow
+  Test ID      : AT-002
+  Script       : test_app_flow.py
+  Objective    : Verify a practical smoke flow covering launch, optional
+                 login, dashboard detection, navigation to Control, and a
+                 Light 1 toggle interaction.
+  Steps        :
+    1. Start Appium session with built debug APK
+    2. Wait for splash screen to complete
+    3. If login form appears, enter email and password
+    4. Verify dashboard text "LIVE POWER USAGE"
+    5. Open Control screen from bottom navigation
+    6. Tap the Light 1 control
+  Expected     : Driver reaches dashboard and control interaction succeeds
+                 without timeout or element-not-found failure.
+  Actual       : Script confirmed dashboard visibility and control access.
+  Result       : PASS
 
-TEST 3: Device Toggle State Change
-  Test ID   : AT-003
-  Description: Toggle Light1 and verify UI state
-  Steps     :
-    Navigate to Control screen
-    Find Light1 toggle switch
-    Check initial state (OFF)
-    Tap toggle
-    Verify toggle shows ON state
-    Verify active count badge shows "1/5 ON"
-  Result    : PASS
-
-TEST 4: Schedule Creation Form
-  Test ID   : AT-004
-  Description: Open schedule creation and verify form elements
-  Steps     :
-    Open Schedules screen
-    Tap "Add Schedule" button
-    Select device dropdown: "Fan 2"
-    Open time picker: set to 22:00
-    Tap Save
-    Verify new schedule appears in list with "Fan 2 - 22:00"
-  Result    : PASS
-
-TEST 5: Profile Name Edit
-  Test ID   : AT-005
-  Steps     : Open Profile -> Tap Edit Name -> Enter "Rahul K" -> Save
-              Verify updated name displayed on profile screen
-  Result    : PASS
+AUTOMATION TEST 3: Firebase Live Data Injection Test
+  Test ID      : AT-003
+  Script       : test_write.py
+  Objective    : Verify that known electrical values written directly to
+                 Firebase Realtime Database are stored correctly and can be
+                 consumed by the Flutter dashboard.
+  Firebase Path: EnergyReadings/live/METER001
+  Test Data    : voltage=230.5, current=1.500, power=0.3457,
+                 frequency=50.0, powerFactor=0.92
+  Expected     : Data appears at the RTDB node and the app dashboard reflects
+                 approximately 0.35 kW, 230.5 V and 1.5 A.
+  Actual       : Data was written and read back successfully from Firebase.
+  Result       : PASS
 
 AUTOMATION SUMMARY:
-  Total Tests : 5
-  Passed      : 5
+  Total Tests : 3
+  Passed      : 3
   Failed      : 0
-  Run Time    : ~45 seconds total (Pixel 6 emulator)
+  Tools       : Appium, UiAutomator2, Firebase Admin SDK, Python 3.10
 
-5.2.6 SELENIUM TESTING
+5.2.6 BACKEND AND FIREBASE VERIFICATION
 
-Selenium WebDriver is used to test the Firebase Console web interface to
-verify data integrity - confirming that WattX app actions result in correct
-data writes to Firebase, and that the Selenium tests validate the system
-end-to-end from a web perspective.
+In addition to the Android automation scripts, backend verification was
+performed by observing the actual Firebase Realtime Database paths used by the
+application and the MQTT-to-Firebase bridge. This was necessary because WattX
+depends on live cloud data rather than local mock objects.
 
-SELENIUM SETUP:
-  Language   : Python 3.10
-  Framework  : Selenium 4.x
-  Driver     : ChromeDriver (matching installed Chrome version)
-  Browser    : Google Chrome 122
-  Test URL   : https://console.firebase.google.com
+BACKEND VERIFICATION 1: MQTT Bridge to Realtime Database
+  Test ID      : BV-001
+  Component    : mqtt_sync.py
+  Objective    : Confirm that MQTT sensor values are transformed and written
+                 to Firebase RTDB at the path used by the Flutter app.
+  Observed Path: EnergyReadings/live/METER001
+  Expected     : Incoming voltage/current/power messages update the live node
+                 with timestamp, frequency and powerFactor.
+  Actual       : mqtt_sync.py wrote corrected sensor data to Firebase and
+                 logged successful updates.
+  Result       : PASS
 
-SELENIUM TEST 1: Firebase RTDB Live Reading Verification
+BACKEND VERIFICATION 2: Device Control Write Path
+  Test ID      : BV-002
+  Component    : AlertService + Database/MQTT bridge
+  Objective    : Confirm that app-side device control changes propagate to the
+                 database path consumed by the automation and bridge logic.
+  Observed Path: Devices/METER001/controls
+  Expected     : Device state changes update Firebase, enabling mqtt_sync.py
+                 or alert timers to react.
+  Actual       : Control updates were observed at the expected database node.
+  Result       : PASS
 
-CODE:
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-import time
+BACKEND VERIFICATION 3: Alert Storage
+  Test ID      : BV-003
+  Component    : AlertService
+  Objective    : Confirm that generated notifications are stored under the
+                 authenticated user's alert path.
+  Observed Path: Alerts/{uid}
+  Expected     : Alerts are created with title, message, type, timestamp and
+                 isRead=false.
+  Actual       : AlertService writes matched the implemented schema.
+  Result       : PASS
 
-driver = webdriver.Chrome()
-driver.maximize_window()
-driver.get("https://console.firebase.google.com/project/wattx-project/database")
-time.sleep(5)  # Wait for Firebase Console to load
+BACKEND VERIFICATION 4: Manual Firebase Console Check
+  Test ID      : BV-004
+  Tool         : Firebase Console (manual inspection)
+  Objective    : Cross-check that test data and control updates are visible in
+                 the Firebase Console after script execution.
+  Expected     : Live readings and control fields visible under the expected
+                 RTDB paths.
+  Actual       : Values were visible in Firebase Console and matched the
+                 Python script output.
+  Result       : PASS
 
-# Verify RTDB data path: readings/METER001/latest
-# Navigate to readings -> METER001 -> latest
-try:
-    power_node = WebDriverWait(driver, 10).until(
-        EC.presence_of_element_located((By.XPATH,
-            "//span[contains(@class,'node-key') and text()='power']"))
-    )
-    assert power_node is not None, "power field not found in RTDB"
-    
-    # Get the value next to 'power' key
-    power_value = driver.find_element(By.XPATH,
-        "//span[contains(@class,'node-key') and text()='power']"
-        "/following-sibling::span[@class='node-value']")
-    
-    power = float(power_value.text.strip('"'))
-    assert 0.1 <= power <= 10.0, f"Power value {power} outside expected range"
-    
-    print(f"TEST PASS: power = {power} kW (verified in Firebase RTDB)")
-    
-except Exception as e:
-    print(f"TEST FAIL: {e}")
-finally:
-    driver.quit()
+BACKEND VERIFICATION SUMMARY:
+  Total Checks : 4
+  Passed       : 4
+  Failed       : 0
 
-OUTPUT:
-TEST PASS: power = 1.42 kW (verified in Firebase RTDB)
+5.3 DEFECT SUMMARY
 
-SCREENSHOT: [Firebase Console showing METER001/latest with power=1.42 - INSERT]
+The testing activities in this chapter identified mostly minor usability and
+stability issues rather than critical functional failures. The main findings
+are summarised below:
 
-SELENIUM TEST 2: Firestore User Role Verification
+  - Small-screen layout clipping was observed in analytics labels and was
+    corrected by adjusting padding and text size.
+  - Google Sign-In account selection behaved inconsistently on an older
+    Android 9 device and was improved through explicit account selection.
+  - Scheduling is implemented using in-memory timers; therefore schedules are
+    reliable only while the app remains active. This is acceptable for the
+    current prototype but should be upgraded in future work using persistent
+    background scheduling.
+  - Automation coverage currently focuses on smoke testing. Dedicated Dart
+    unit and widget tests should be added in future iterations for stronger
+    regression protection.
 
-Code outline:
-  Navigate to Firestore in Firebase Console
-  Find users collection -> search for test user UID
-  Verify document field: role = "user"
-  Expected: role field contains "user" text
-  Actual  : role field shows "user"
-  Result  : PASS
+5.4 CHAPTER SUMMARY
 
-SELENIUM TEST 3: Firestore Bill Payment Record
+This chapter presented the complete testing strategy for WattX, covering
+code-level verification, integration testing, full-system validation, user
+acceptance testing, Python/Appium automation, and Firebase backend checks.
+Across the documented tests, the system satisfied the major project
+requirements: live data reached the dashboard correctly, device controls were
+propagated through Firebase and MQTT, authentication and role-based access
+worked correctly, alerts and schedules operated as expected, and users rated
+the application positively during UAT.
 
-Code outline:
-  After completing Razorpay test payment
-  Navigate to Firestore -> payments collection
-  Find most recent document
-  Verify: status = "captured", amount = 842.50
-  Expected: payment record with correct amount and status
-  Actual  : payment record found with status: captured, amount: 842.50
-  Result  : PASS
-
-SELENIUM TEST 4: RTDB Device Control State Verification
-
-Code outline:
-  Perform Light1 toggle ON in WattX app
-  Navigate to Firebase Console -> RTDB -> devices/METER001/controls/light1
-  Expected: value = true
-  Actual  : value = true (confirmed within 2 seconds of app toggle)
-  Result  : PASS
-
-TEST CASE FORMAT - DETAILED SELENIUM TEST REPORTS:
-
-Test Case 1: Login and Dashboard Verification
-Project Name: WattX - Smart Energy Monitor
-Test Case ID: Test_1        Test Designed By: [Student Name]
-Test Priority: High         Test Designed Date: 2026-02-10
-Module Name: Authentication Test Executed By: [Student Name]
-Test Title: Valid Login with Email/Password - Dashboard Load
-Execution Date: 2026-02-15
-Description: Verify that a registered user with role='user' can log in
-             successfully and is navigated to the Home Dashboard screen
-Pre-Condition: User "rahul@gmail.com" registered in Firebase Auth with
-               role='user' in Firestore. App installed on test device.
-
-Step  Test Step                    Test Data              Expected           Actual           Status
-1     Launch WattX app             -                      Splash screen      Shown            Pass
-2     Splash checks auth state     -                      Login screen shown Login shown      Pass
-3     Tap email field              -                      Keyboard appears   Appeared         Pass
-4     Type email address           rahul@gmail.com        Email entered      Entered          Pass
-5     Tap password field           -                      Cursor in field    Moved            Pass
-6     Type password                Test@1234              Password masked    Masked           Pass
-7     Tap "Login" button           -                      Loading spinner    Shown            Pass
-8     Firebase Auth processes      -                      Auth success API   Success          Pass
-9     Firestore role fetch         role = "user"          User role found    Found            Pass
-10    Navigator routes user        DashboardScreen        Dashboard loads    Dashboard shown  Pass
-11    Live power card visible      -                      Shows kW reading   1.42 kW shown    Pass
-12    Metrics grid loaded          -                      V, A, Hz, PF shown All 4 shown      Pass
-
-Post-Condition: User authenticated, on Home Dashboard showing live data.
-
-Test Case 2: Device Toggle Integration Test
-Project Name: WattX
-Test Case ID: Test_2        Test Designed By: [Student Name]
-Test Priority: High         Module: Control Center
-Test Title: Toggle Light2 ON and verify Firebase + physical relay
-Execution Date: 2026-02-20
-
-Pre-Condition: User logged in. Light2 initially OFF. mqtt_sync.py running.
-               Physical relay board connected to ESP8266 (Light2 on GPIO4).
-
-Step  Test Step                    Test Data         Expected                Actual          Status
-1     Navigate to Control tab      -                 Control screen loads    Loaded          Pass
-2     Verify Light2 initial state  -                 Shows OFF (grey ring)   OFF shown       Pass
-3     Tap Light2 toggle switch     -                 Toggle animates to blue Animated        Pass
-4     Verify Firebase RTDB write   light2 = true     Firebase updated        Confirmed       Pass
-5     mqtt_sync.py publishes MQTT  {"light2":true}   MQTT message sent       Sent            Pass
-6     ESP8266 receives command     GPIO4 = HIGH      Relay channel 2 closes  Closed          Pass
-7     Physical Light2 turns ON     -                 Light illuminates       Illuminated     Pass
-8     Active count badge updates   -                 Shows "1/5 ON"          Badge updated   Pass
-9     Toggle Light2 OFF            light2 = false    Light turns off         Turned off      Pass
-
-Post-Condition: Light2 state correctly reflects in app, Firebase, and hardware.
-
-Test Case 3: Analytics Chart Weekly View
-Project Name: WattX
-Test Case ID: Test_3        Test Priority: Medium
-Test Title: Verify Analytics screen Week tab displays correct bar chart
-Execution Date: 2026-02-22
-Pre-Condition: Firebase RTDB /analytics/METER001/week has 7 days of data.
-               User logged in on Dashboard.
-
-Step  Test Step                    Test Data     Expected                   Actual          Status
-1     Tap Analytics tab            -             Analytics screen loads     Loaded          Pass
-2     Verify default view          -             Day tab selected (default) Day tab active  Pass
-3     Tap "Week" tab               -             Week tab highlighted       Highlighted     Pass
-4     Observe chart reload         -             7 vertical bars appear     7 bars shown    Pass
-5     Check bar labels             -             Mon,Tue,Wed,Thu,Fri,Sat,Sun All 7 shown   Pass
-6     Tap "Wednesday" bar          -             Tooltip: "5.1 kWh"         Tooltip shown  Pass
-7     Check Peak Load display      -             Shows highest day value     7.2 kWh shown  Pass
-8     Check Estimated Bill         -             Shows monthly calc (INR)   Rs. 842 shown  Pass
-9     Tap "Month" tab              -             Monthly bar chart appears   Appeared       Pass
-10    Tap "Year" tab               -             12-month bar chart appears  Appeared       Pass
-
-Post-Condition: All 4 chart tabs (Day/Week/Month/Year) working correctly.
-
-Test Case 4: Smart Alert Overage Notification
-Project Name: WattX
-Test Case ID: Test_4        Test Priority: High
-Test Title: Verify critical overage alert is generated and displayed
-Execution Date: 2026-02-25
-Pre-Condition: User logged in. AlertService configured with threshold=3.5kW.
-               7-day average = 1.0 kW (seeded test data).
-
-Step  Test Step                    Test Data        Expected                  Actual         Status
-1     Inject high power reading    power = 4.2 kW   Firebase RTDB updated     Updated        Pass
-2     Wait for AlertService timer  -                Next check in ~30 sec     Waited 32 sec  Pass
-3     AlertService evaluates power 4.2 > 3.5 kW    Overage condition true    True           Pass
-4     Alert written to Firebase    type=critical    Alert doc created         Created        Pass
-5     Push notification sent       -                Notification on device    Received       Pass
-6     Open Notifications screen    -                Alert shown in list       Alert shown    Pass
-7     Verify alert color badge     -                Red badge for critical    Red shown      Pass
-8     Verify alert title           -                "Critical Power Detected" Shown          Pass
-9     Verify alert message         -                Shows 4.2kW, 320% above  Correct text   Pass
-10    Tap alert to mark read       isRead = true    Alert dims / read badge   Dimmed         Pass
-11    Verify Firestore isRead      -                isRead = true in DB       Confirmed      Pass
-
-Post-Condition: Alert correctly generated, displayed, and marked as read.
-
-SELENIUM TEST REPORT:
-Test Case ID: SELN_1       Tool: Selenium 4.x + ChromeDriver
-Test Title: Firebase RTDB power field verification
-Pre-Condition: IoT device and mqtt_sync.py running. Browser logged into
-               Firebase Console (console.firebase.google.com).
-
-Step  Test Step                    Expected                     Actual          Status
-1     Open Firebase Console URL    Firebase Console loads       Loaded          Pass
-2     Navigate to RTDB section     Realtime Database screen     Shown           Pass
-3     Expand readings/METER001     Node tree expands            Expanded        Pass
-4     Expand latest node           power, voltage, timestamp    Fields shown    Pass
-5     Find power field             power = 1.42 (or current)    1.42 found      Pass
-6     Assert value in range 0-10   No assertion error           Passed          Pass
-7     Capture screenshot           Screenshot saved             Saved           Pass
-
-Post-Condition: Firebase RTDB confirmed to contain valid real-time data.
+Overall, the Chapter 5 results demonstrate that WattX is functionally viable
+as a smart energy monitoring prototype. The remaining work is not core defect
+repair but hardening: expanding automated Dart tests, improving persistent
+scheduling, and broadening device coverage for production readiness.
